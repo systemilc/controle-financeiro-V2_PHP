@@ -1,0 +1,134 @@
+[17-Sep-2025 23:44:52 America/Sao_Paulo] PHP Deprecated:  Creation of dynamic property Transacao::$grupo_id is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/relatorios.php on line 23
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Deprecated:  Creation of dynamic property Transacao::$grupo_id is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 27
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 470
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 478
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 470
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 478
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 470
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 478
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 470
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 478
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 470
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 478
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 478
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 470
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 478
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 478
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 478
+[17-Sep-2025 23:45:05 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 478
+[18-Sep-2025 00:21:19 America/Sao_Paulo] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home/smartvirtuacom/public_html/controle-financeiro/classes/Notificacao.php:217
+Stack trace:
+#0 /home/smartvirtuacom/public_html/controle-financeiro/ajax_notificacoes.php(27): Notificacao->contarNaoLidas(3)
+#1 {main}
+  thrown in /home/smartvirtuacom/public_html/controle-financeiro/classes/Notificacao.php on line 217
+[18-Sep-2025 00:21:36 America/Sao_Paulo] PHP Fatal error:  Uncaught Error: Cannot use object of type PDOStatement as array in /home/smartvirtuacom/public_html/controle-financeiro/configuracoes.php:172
+Stack trace:
+#0 {main}
+  thrown in /home/smartvirtuacom/public_html/controle-financeiro/configuracoes.php on line 172
+[18-Sep-2025 00:21:54 America/Sao_Paulo] PHP Deprecated:  Creation of dynamic property Transacao::$grupo_id is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 26
+[18-Sep-2025 00:21:57 America/Sao_Paulo] PHP Deprecated:  Creation of dynamic property Transacao::$grupo_id is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 27
+[18-Sep-2025 00:22:26 America/Sao_Paulo] PHP Deprecated:  Creation of dynamic property Transacao::$grupo_id is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 26
+[18-Sep-2025 00:22:27 America/Sao_Paulo] PHP Deprecated:  Creation of dynamic property Transacao::$grupo_id is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 27
+[18-Sep-2025 00:23:12 America/Sao_Paulo] PHP Deprecated:  Creation of dynamic property Transacao::$grupo_id is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/relatorios.php on line 23
+[18-Sep-2025 00:23:12 America/Sao_Paulo] PHP Deprecated:  number_format(): Passing null to parameter #1 ($num) of type float is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/relatorios.php on line 178
+[18-Sep-2025 00:23:12 America/Sao_Paulo] PHP Deprecated:  number_format(): Passing null to parameter #1 ($num) of type float is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/relatorios.php on line 189
+[18-Sep-2025 08:14:07 America/Sao_Paulo] PHP Deprecated:  Creation of dynamic property Transacao::$grupo_id is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/relatorios.php on line 23
+[18-Sep-2025 08:14:07 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/relatorios.php on line 297
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Deprecated:  Creation of dynamic property Transacao::$grupo_id is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 26
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:14:13 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Deprecated:  Creation of dynamic property Transacao::$grupo_id is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 27
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 405
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 413
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 405
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 413
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 405
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 413
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 405
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 413
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 405
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 413
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 413
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 405
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 413
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 413
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 413
+[18-Sep-2025 08:14:32 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/pendentes.php on line 413
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Deprecated:  Creation of dynamic property Transacao::$grupo_id is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 26
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 389
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[18-Sep-2025 08:18:48 America/Sao_Paulo] PHP Warning:  Undefined array key "categoria_cor" in /home/smartvirtuacom/public_html/controle-financeiro/transacoes.php on line 397
+[21-Sep-2025 17:30:31 America/Sao_Paulo] PHP Fatal error:  Uncaught Error: Cannot use object of type PDOStatement as array in /home/smartvirtuacom/public_html/controle-financeiro/configuracoes.php:172
+Stack trace:
+#0 {main}
+  thrown in /home/smartvirtuacom/public_html/controle-financeiro/configuracoes.php on line 172
+[21-Sep-2025 17:30:37 America/Sao_Paulo] PHP Fatal error:  Uncaught Error: Cannot use object of type PDOStatement as array in /home/smartvirtuacom/public_html/controle-financeiro/perfil.php:260
+Stack trace:
+#0 {main}
+  thrown in /home/smartvirtuacom/public_html/controle-financeiro/perfil.php on line 260
+[21-Sep-2025 17:31:36 America/Sao_Paulo] PHP Deprecated:  Creation of dynamic property Transacao::$grupo_id is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/relatorios.php on line 23
+[21-Sep-2025 17:31:36 America/Sao_Paulo] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /home/smartvirtuacom/public_html/controle-financeiro/relatorios.php on line 297
+[21-Sep-2025 17:32:11 America/Sao_Paulo] PHP Fatal error:  Uncaught Error: Cannot use object of type PDOStatement as array in /home/smartvirtuacom/public_html/controle-financeiro/perfil.php:260
+Stack trace:
+#0 {main}
+  thrown in /home/smartvirtuacom/public_html/controle-financeiro/perfil.php on line 260
+[21-Sep-2025 17:32:14 America/Sao_Paulo] PHP Fatal error:  Uncaught Error: Cannot use object of type PDOStatement as array in /home/smartvirtuacom/public_html/controle-financeiro/configuracoes.php:172
+Stack trace:
+#0 {main}
+  thrown in /home/smartvirtuacom/public_html/controle-financeiro/configuracoes.php on line 172
+[21-Sep-2025 22:39:21 America/Sao_Paulo] PHP Warning:  Undefined variable $conn in /home/smartvirtuacom/public_html/controle-financeiro/ajax_notificacoes.php on line 18
+[21-Sep-2025 22:39:37 America/Sao_Paulo] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'smartvirtuacom_controle-financeiro.email_queue' doesn't exist in /home/smartvirtuacom/public_html/controle-financeiro/classes/EmailQueue.php:50
+Stack trace:
+#0 /home/smartvirtuacom/public_html/controle-financeiro/classes/EmailQueue.php(50): PDOStatement->execute()
+#1 /home/smartvirtuacom/public_html/controle-financeiro/ajax_processar_emails.php(27): EmailQueue->processarFila(10)
+#2 {main}
+  thrown in /home/smartvirtuacom/public_html/controle-financeiro/classes/EmailQueue.php on line 50
+[21-Sep-2025 22:41:54 America/Sao_Paulo] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'smartvirtuacom_controle-financeiro.email_queue' doesn't exist in /home/smartvirtuacom/public_html/controle-financeiro/classes/EmailQueue.php:33
+Stack trace:
+#0 /home/smartvirtuacom/public_html/controle-financeiro/classes/EmailQueue.php(33): PDOStatement->execute()
+#1 /home/smartvirtuacom/public_html/controle-financeiro/classes/Convite.php(303): EmailQueue->adicionarEmail('SMARTVIRTUA2024...', 'Convite para pa...', '\n        <!DOCT...', true, '2')
+#2 /home/smartvirtuacom/public_html/controle-financeiro/classes/Convite.php(63): Convite->enviarEmailConvite()
+#3 /home/smartvirtuacom/public_html/controle-financeiro/convites.php(45): Convite->create()
+#4 {main}
+  thrown in /home/smartvirtuacom/public_html/controle-financeiro/classes/EmailQueue.php on line 33
+[21-Sep-2025 22:42:00 America/Sao_Paulo] PHP Warning:  Undefined variable $conn in /home/smartvirtuacom/public_html/controle-financeiro/ajax_notificacoes.php on line 18
+[21-Sep-2025 22:42:26 America/Sao_Paulo] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'smartvirtuacom_controle-financeiro.email_queue' doesn't exist in /home/smartvirtuacom/public_html/controle-financeiro/classes/EmailQueue.php:50
+Stack trace:
+#0 /home/smartvirtuacom/public_html/controle-financeiro/classes/EmailQueue.php(50): PDOStatement->execute()
+#1 /home/smartvirtuacom/public_html/controle-financeiro/ajax_processar_emails.php(27): EmailQueue->processarFila(10)
+#2 {main}
+  thrown in /home/smartvirtuacom/public_html/controle-financeiro/classes/EmailQueue.php on line 50
+[21-Sep-2025 22:48:30 America/Sao_Paulo] PHP Warning:  Undefined variable $conn in /home/smartvirtuacom/public_html/controle-financeiro/ajax_notificacoes.php on line 18
+[21-Sep-2025 22:49:00 America/Sao_Paulo] PHP Warning:  Undefined variable $conn in /home/smartvirtuacom/public_html/controle-financeiro/ajax_notificacoes.php on line 18
+[21-Sep-2025 22:49:31 America/Sao_Paulo] PHP Warning:  Undefined variable $conn in /home/smartvirtuacom/public_html/controle-financeiro/ajax_notificacoes.php on line 18
