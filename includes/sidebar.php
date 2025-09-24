@@ -56,6 +56,9 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <a class="nav-link <?= $currentPage === 'compras.php' ? 'active' : '' ?>" href="compras.php">
                 <i class="fas fa-shopping-cart"></i>Compras
             </a>
+            <a class="nav-link <?= $currentPage === 'importar_planilha.php' ? 'active' : '' ?>" href="importar_planilha.php">
+                <i class="fas fa-file-excel"></i>Importar Planilha
+            </a>
             <a class="nav-link <?= $currentPage === 'relatorios.php' ? 'active' : '' ?>" href="relatorios.php">
                 <i class="fas fa-chart-bar"></i>Relatórios
             </a>

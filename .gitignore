@@ -1,0 +1,47 @@
+# Arquivos de configuração local
+config/local.php
+config/database_local.php
+
+# Arquivos de upload
+uploads/
+!uploads/.gitkeep
+
+# Arquivos de log
+*.log
+error_log
+
+# Arquivos temporários
+*.tmp
+*.temp
+*~
+
+# Arquivos de backup
+*.bak
+*.backup
+
+# Arquivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de dependências (se não usar composer)
+vendor/
+
+# Arquivos de teste (removidos)
+test_*.php
+debug_*.php
+check_*.php
+*_test.php
+
+# Arquivos de exemplo
+exemplo_*.xlsx
+exemplo_*.csv
+exemplo_*.tsv
+
+# Arquivos de commit
+COMMIT_MESSAGE.md

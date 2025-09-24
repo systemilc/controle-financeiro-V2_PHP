@@ -243,5 +243,18 @@ class Fornecedor {
         
         return $telefone;
     }
+
+    // Buscar fornecedor por CNPJ
+    public function getByCNPJ($cnpj) {
+        $query = "SELECT * FROM " . $this->table_name . " 
+                  WHERE grupo_id = :grupo_id AND cnpj = :cnpj";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":grupo_id", $this->grupo_id);
+        $stmt->bindParam(":cnpj", $cnpj);
+        $stmt->execute();
+        
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }
 ?>

@@ -155,6 +155,7 @@ class Auth {
         return [
             'id' => $user_data['id'],
             'username' => $user_data['username'],
+            'nome' => $user_data['nome'] ?? $user_data['username'],
             'grupo_id' => $user_data['grupo_id'],
             'role' => $user_data['role'],
             'grupo_nome' => $user_data['grupo_nome'] ?? 'Grupo Principal',

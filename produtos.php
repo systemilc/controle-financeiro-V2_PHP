@@ -97,9 +97,8 @@ $produtos = $stmt_produtos->fetchAll(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Produtos - Controle Financeiro</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
     <link href="assets/css/style.css" rel="stylesheet">
     <style>
         .main-content {
@@ -153,59 +152,7 @@ $produtos = $stmt_produtos->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <div class="container-fluid">
         <div class="row">
-                        <?php include 'includes/sidebar.php'; ?>
-                    
-                    <nav class="nav flex-column">
-                        <a class="nav-link" href="index.php">
-                            <i class="fas fa-home"></i>Dashboard
-                        </a>
-                        <a class="nav-link" href="transacoes.php">
-                            <i class="fas fa-exchange-alt"></i>Transações
-                        </a>
-                        <a class="nav-link" href="pendentes.php">
-                            <i class="fas fa-clock"></i>Pendentes
-                        </a>
-                        <a class="nav-link" href="contas.php">
-                            <i class="fas fa-university"></i>Contas
-                        </a>
-                        <a class="nav-link" href="categorias.php">
-                            <i class="fas fa-tags"></i>Categorias
-                        </a>
-                        <a class="nav-link" href="tipos_pagamento.php">
-                            <i class="fas fa-credit-card"></i>Tipos de Pagamento
-                        </a>
-                        <a class="nav-link" href="fornecedores.php">
-                            <i class="fas fa-truck"></i>Fornecedores
-                        </a>
-                        <a class="nav-link active" href="produtos.php">
-                            <i class="fas fa-box"></i>Produtos
-                        </a>
-                        <a class="nav-link" href="compras.php">
-                            <i class="fas fa-shopping-cart"></i>Compras
-                        </a>
-                        <a class="nav-link" href="relatorios.php">
-                            <i class="fas fa-chart-bar"></i>Relatórios
-                        </a>
-                        <a class="nav-link" href="notificacoes.php">
-                            <i class="fas fa-bell"></i>Notificações
-                            <span id="notification-count" class="badge bg-danger ms-2" style="display: none;">0</span>
-                        </a>
-                        <?php if($auth->isAdmin()): ?>
-                        <hr class="text-white-50">
-                        <a class="nav-link" href="usuarios.php">
-                            <i class="fas fa-users"></i>Usuários
-                        </a>
-                        <a class="nav-link" href="grupos.php">
-                            <i class="fas fa-layer-group"></i>Grupos
-                        </a>
-                        <?php endif; ?>
-                        <hr class="text-white-50">
-                        <a class="nav-link" href="logout.php">
-                            <i class="fas fa-sign-out-alt"></i>Sair
-                        </a>
-                    </nav>
-                </div>
-            </div>
+            <?php include 'includes/sidebar.php'; ?>
 
             <!-- Main Content -->
             <div class="col-md-9 col-lg-10">
@@ -403,14 +350,14 @@ $produtos = $stmt_produtos->fetchAll(PDO::FETCH_ASSOC);
                         <input type="hidden" name="id" id="produtoId">
                         
                         <div class="mb-3">
-                            <label for="nome" class="form-label">Nome do Produto *</label>
-                            <input type="text" class="form-control" id="nome" name="nome" required 
+                            <label for="nome_modal" class="form-label">Nome do Produto *</label>
+                            <input type="text" class="form-control" id="nome_modal" name="nome" required 
                                    placeholder="Ex: Arroz 5kg, Leite Integral 1L">
                         </div>
                         
                         <div class="mb-3">
-                            <label for="codigo" class="form-label">Código do Produto</label>
-                            <input type="text" class="form-control" id="codigo" name="codigo" 
+                            <label for="codigo_modal" class="form-label">Código do Produto</label>
+                            <input type="text" class="form-control" id="codigo_modal" name="codigo" 
                                    placeholder="Ex: ARR001, LEI001">
                             <small class="form-text text-muted">
                                 Código único para identificação do produto (opcional)
@@ -448,14 +395,14 @@ $produtos = $stmt_produtos->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function editarProduto(produto) {
             document.getElementById('modalTitulo').textContent = 'Editar Produto';
             document.getElementById('action').value = 'update';
             document.getElementById('produtoId').value = produto.id;
-            document.getElementById('nome').value = produto.nome;
-            document.getElementById('codigo').value = produto.codigo;
+            document.getElementById('nome_modal').value = produto.nome;
+            document.getElementById('codigo_modal').value = produto.codigo;
             
             var modal = new bootstrap.Modal(document.getElementById('modalProduto'));
             modal.show();
@@ -482,8 +429,8 @@ $produtos = $stmt_produtos->fetchAll(PDO::FETCH_ASSOC);
             document.getElementById('modalTitulo').textContent = 'Novo Produto';
             document.getElementById('action').value = 'create';
             document.getElementById('produtoId').value = '';
-            document.getElementById('nome').value = '';
-            document.getElementById('codigo').value = '';
+            document.getElementById('nome_modal').value = '';
+            document.getElementById('codigo_modal').value = '';
         });
 
         // Atualizar contador de notificações

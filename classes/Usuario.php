@@ -24,6 +24,7 @@ class Usuario {
     public $cidade;
     public $estado;
     public $cep;
+    public $nome;
 
     public function __construct($db = null) {
         if ($db === null) {

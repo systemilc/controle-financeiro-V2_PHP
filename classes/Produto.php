@@ -314,5 +314,18 @@ class Produto {
         
         return $stmt;
     }
+
+    // Buscar produto por código
+    public function getByCodigo($codigo) {
+        $query = "SELECT * FROM " . $this->table_name . " 
+                  WHERE grupo_id = :grupo_id AND codigo = :codigo";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":grupo_id", $this->grupo_id);
+        $stmt->bindParam(":codigo", $codigo);
+        $stmt->execute();
+        
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }
 ?>

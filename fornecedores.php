@@ -98,9 +98,8 @@ $fornecedores = $stmt_fornecedores->fetchAll(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fornecedores - Controle Financeiro</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
     <link href="assets/css/style.css" rel="stylesheet">
     <style>
         .main-content {
@@ -147,59 +146,7 @@ $fornecedores = $stmt_fornecedores->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <div class="container-fluid">
         <div class="row">
-                        <?php include 'includes/sidebar.php'; ?>
-                    
-                    <nav class="nav flex-column">
-                        <a class="nav-link" href="index.php">
-                            <i class="fas fa-home"></i>Dashboard
-                        </a>
-                        <a class="nav-link" href="transacoes.php">
-                            <i class="fas fa-exchange-alt"></i>Transações
-                        </a>
-                        <a class="nav-link" href="pendentes.php">
-                            <i class="fas fa-clock"></i>Pendentes
-                        </a>
-                        <a class="nav-link" href="contas.php">
-                            <i class="fas fa-university"></i>Contas
-                        </a>
-                        <a class="nav-link" href="categorias.php">
-                            <i class="fas fa-tags"></i>Categorias
-                        </a>
-                        <a class="nav-link" href="tipos_pagamento.php">
-                            <i class="fas fa-credit-card"></i>Tipos de Pagamento
-                        </a>
-                        <a class="nav-link active" href="fornecedores.php">
-                            <i class="fas fa-truck"></i>Fornecedores
-                        </a>
-                        <a class="nav-link" href="produtos.php">
-                            <i class="fas fa-box"></i>Produtos
-                        </a>
-                        <a class="nav-link" href="compras.php">
-                            <i class="fas fa-shopping-cart"></i>Compras
-                        </a>
-                        <a class="nav-link" href="relatorios.php">
-                            <i class="fas fa-chart-bar"></i>Relatórios
-                        </a>
-                        <a class="nav-link" href="notificacoes.php">
-                            <i class="fas fa-bell"></i>Notificações
-                            <span id="notification-count" class="badge bg-danger ms-2" style="display: none;">0</span>
-                        </a>
-                        <?php if($auth->isAdmin()): ?>
-                        <hr class="text-white-50">
-                        <a class="nav-link" href="usuarios.php">
-                            <i class="fas fa-users"></i>Usuários
-                        </a>
-                        <a class="nav-link" href="grupos.php">
-                            <i class="fas fa-layer-group"></i>Grupos
-                        </a>
-                        <?php endif; ?>
-                        <hr class="text-white-50">
-                        <a class="nav-link" href="logout.php">
-                            <i class="fas fa-sign-out-alt"></i>Sair
-                        </a>
-                    </nav>
-                </div>
-            </div>
+            <?php include 'includes/sidebar.php'; ?>
 
             <!-- Main Content -->
             <div class="col-md-9 col-lg-10">
@@ -425,7 +372,7 @@ $fornecedores = $stmt_fornecedores->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function editarFornecedor(fornecedor) {
             document.getElementById('modalTitulo').textContent = 'Editar Fornecedor';
