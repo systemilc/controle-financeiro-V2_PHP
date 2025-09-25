@@ -68,12 +68,12 @@ class Transacao {
         }
         
         $query = "INSERT INTO " . $this->table_name . " 
-                  SET usuario_id=:usuario_id, conta_id=:conta_id, categoria_id=:categoria_id, 
-                      tipo_pagamento_id=:tipo_pagamento_id, descricao=:descricao, valor=:valor, 
-                      tipo=:tipo, is_confirmed=:is_confirmed, data_transacao=:data_transacao, 
-                      data_vencimento=:data_vencimento, observacoes=:observacoes, 
-                      is_transfer=:is_transfer, conta_original_nome=:conta_original_nome, 
-                      multiplicador=:multiplicador";
+                  (usuario_id, conta_id, categoria_id, tipo_pagamento_id, descricao, valor, 
+                   tipo, is_confirmed, data_transacao, data_vencimento, observacoes, 
+                   is_transfer, conta_original_nome, multiplicador) 
+                  VALUES (:usuario_id, :conta_id, :categoria_id, :tipo_pagamento_id, :descricao, :valor, 
+                          :tipo, :is_confirmed, :data_transacao, :data_vencimento, :observacoes, 
+                          :is_transfer, :conta_original_nome, :multiplicador)";
 
         $stmt = $this->conn->prepare($query);
 
@@ -81,13 +81,13 @@ class Transacao {
         $this->observacoes = htmlspecialchars(strip_tags($this->observacoes));
         $this->conta_original_nome = htmlspecialchars(strip_tags($this->conta_original_nome));
         
-        // Sempre usar data atual (com timezone correto)
-        $data_atual = getCurrentDate();
+        // Usar data da transação se definida, senão usar data atual
+        $data_transacao = !empty($this->data_transacao) ? $this->data_transacao : getCurrentDate();
 
         // Tratar valores nulos para foreign keys
         $categoria_id = !empty($this->categoria_id) ? $this->categoria_id : null;
         $tipo_pagamento_id = !empty($this->tipo_pagamento_id) ? $this->tipo_pagamento_id : null;
-        $data_vencimento = !empty($this->data_vencimento) ? $this->data_vencimento : null;
+        $data_vencimento = !empty($this->data_vencimento) ? $this->data_vencimento : $data_transacao;
         $observacoes = !empty($this->observacoes) ? $this->observacoes : null;
         $conta_original_nome = !empty($this->conta_original_nome) ? $this->conta_original_nome : null;
 
@@ -99,7 +99,7 @@ class Transacao {
         $stmt->bindParam(":valor", $this->valor);
         $stmt->bindParam(":tipo", $this->tipo);
         $stmt->bindParam(":is_confirmed", $this->is_confirmed);
-        $stmt->bindParam(":data_transacao", $data_atual);
+        $stmt->bindParam(":data_transacao", $data_transacao);
         $stmt->bindParam(":data_vencimento", $data_vencimento);
         $stmt->bindParam(":observacoes", $observacoes);
         $stmt->bindParam(":is_transfer", $this->is_transfer);
@@ -109,9 +109,12 @@ class Transacao {
         if($stmt->execute()) {
             // Atualizar saldo da conta após criação
             $this->atualizarSaldoContaCriacao();
+            error_log("Transacao: Transação criada com sucesso. ID: " . $this->conn->lastInsertId());
             return true;
+        } else {
+            error_log("Transacao: ERRO ao executar INSERT - " . print_r($stmt->errorInfo(), true));
+            return false;
         }
-        return false;
     }
 
     // Ler transações
@@ -407,10 +410,10 @@ class Transacao {
     // Obter resumo financeiro
     public function getResumo($data_inicio = null, $data_fim = null, $grupo_id = null) {
         $query = "SELECT 
-                    SUM(CASE WHEN tipo = 'receita' AND is_confirmed = 1 THEN valor ELSE 0 END) as total_receitas,
-                    SUM(CASE WHEN tipo = 'despesa' AND is_confirmed = 1 THEN valor ELSE 0 END) as total_despesas,
-                    COUNT(CASE WHEN tipo = 'receita' AND is_confirmed = 1 THEN 1 END) as qtd_receitas,
-                    COUNT(CASE WHEN tipo = 'despesa' AND is_confirmed = 1 THEN 1 END) as qtd_despesas
+                    SUM(CASE WHEN tipo = 'receita' AND is_confirmed = 1 AND (is_transfer IS NULL OR is_transfer = 0) THEN valor ELSE 0 END) as total_receitas,
+                    SUM(CASE WHEN tipo = 'despesa' AND is_confirmed = 1 AND (is_transfer IS NULL OR is_transfer = 0) THEN valor ELSE 0 END) as total_despesas,
+                    COUNT(CASE WHEN tipo = 'receita' AND is_confirmed = 1 AND (is_transfer IS NULL OR is_transfer = 0) THEN 1 END) as qtd_receitas,
+                    COUNT(CASE WHEN tipo = 'despesa' AND is_confirmed = 1 AND (is_transfer IS NULL OR is_transfer = 0) THEN 1 END) as qtd_despesas
                   FROM " . $this->table_name . " t";
 
         $conditions = [];
@@ -502,8 +505,8 @@ class Transacao {
     public function getByAccount($data_inicio = null, $data_fim = null) {
         $query = "SELECT 
                     c.nome,
-                    SUM(CASE WHEN t.tipo = 'receita' AND t.is_confirmed = 1 THEN t.valor ELSE 0 END) as receitas,
-                    SUM(CASE WHEN t.tipo = 'despesa' AND t.is_confirmed = 1 THEN t.valor ELSE 0 END) as despesas
+                    SUM(CASE WHEN t.tipo = 'receita' AND t.is_confirmed = 1 AND (t.is_transfer IS NULL OR t.is_transfer = 0) THEN t.valor ELSE 0 END) as receitas,
+                    SUM(CASE WHEN t.tipo = 'despesa' AND t.is_confirmed = 1 AND (t.is_transfer IS NULL OR t.is_transfer = 0) THEN t.valor ELSE 0 END) as despesas
                   FROM " . $this->table_name . " t
                   LEFT JOIN contas c ON t.conta_id = c.id
                   WHERE t.usuario_id IN (SELECT id FROM usuarios WHERE grupo_id = :grupo_id)";
@@ -545,8 +548,8 @@ class Transacao {
         $query = "SELECT 
                     DATE_FORMAT(data_transacao, '%Y-%m') as mes,
                     DATE_FORMAT(data_transacao, '%m/%Y') as mes_formatado,
-                    SUM(CASE WHEN tipo = 'receita' AND is_confirmed = 1 THEN valor ELSE 0 END) as receitas,
-                    SUM(CASE WHEN tipo = 'despesa' AND is_confirmed = 1 THEN valor ELSE 0 END) as despesas
+                    SUM(CASE WHEN tipo = 'receita' AND is_confirmed = 1 AND (is_transfer IS NULL OR is_transfer = 0) THEN valor ELSE 0 END) as receitas,
+                    SUM(CASE WHEN tipo = 'despesa' AND is_confirmed = 1 AND (is_transfer IS NULL OR is_transfer = 0) THEN valor ELSE 0 END) as despesas
                   FROM " . $this->table_name . "
                   WHERE usuario_id IN (SELECT id FROM usuarios WHERE grupo_id = :grupo_id)";
 
@@ -661,6 +664,12 @@ class Transacao {
     public function createParcelas($quantidade_parcelas, $tipo_parcelamento) {
         $parcelas_criadas = 0;
         
+        // Verificar se o parcelamento é válido
+        if ($quantidade_parcelas <= 1) {
+            error_log("Transacao: Parcelamento não aplicado - quantidade <= 1: $quantidade_parcelas");
+            return 0;
+        }
+        
         // Verificar se o usuario_id existe
         if (empty($this->usuario_id)) {
             throw new Exception("Usuario ID não definido para criar parcelas");
@@ -727,12 +736,12 @@ class Transacao {
             
             // Criar transação da parcela
             $query = "INSERT INTO " . $this->table_name . " 
-                      SET usuario_id=:usuario_id, conta_id=:conta_id, categoria_id=:categoria_id, 
-                          tipo_pagamento_id=:tipo_pagamento_id, descricao=:descricao, valor=:valor, 
-                          tipo=:tipo, is_confirmed=:is_confirmed, data_transacao=:data_transacao, 
-                          data_vencimento=:data_vencimento, observacoes=:observacoes, 
-                          is_transfer=:is_transfer, conta_original_nome=:conta_original_nome, 
-                          multiplicador=:multiplicador";
+                      (usuario_id, conta_id, categoria_id, tipo_pagamento_id, descricao, valor, 
+                       tipo, is_confirmed, data_transacao, data_vencimento, observacoes, 
+                       is_transfer, conta_original_nome, multiplicador) 
+                      VALUES (:usuario_id, :conta_id, :categoria_id, :tipo_pagamento_id, :descricao, :valor, 
+                              :tipo, :is_confirmed, :data_transacao, :data_vencimento, :observacoes, 
+                              :is_transfer, :conta_original_nome, :multiplicador)";
 
             $stmt = $this->conn->prepare($query);
 
@@ -814,8 +823,8 @@ class Transacao {
                     COUNT(*) as total_transacoes,
                     COUNT(CASE WHEN is_confirmed = 1 THEN 1 END) as transacoes_confirmadas,
                     COUNT(CASE WHEN is_confirmed = 0 THEN 1 END) as transacoes_pendentes,
-                    SUM(CASE WHEN tipo = 'receita' AND is_confirmed = 1 THEN valor ELSE 0 END) as receitas_totais,
-                    SUM(CASE WHEN tipo = 'despesa' AND is_confirmed = 1 THEN valor ELSE 0 END) as despesas_totais,
+                    SUM(CASE WHEN tipo = 'receita' AND is_confirmed = 1 AND (is_transfer IS NULL OR is_transfer = 0) THEN valor ELSE 0 END) as receitas_totais,
+                    SUM(CASE WHEN tipo = 'despesa' AND is_confirmed = 1 AND (is_transfer IS NULL OR is_transfer = 0) THEN valor ELSE 0 END) as despesas_totais,
                     COUNT(DISTINCT usuario_id) as usuarios_ativos,
                     COUNT(DISTINCT conta_id) as contas_utilizadas
                   FROM " . $this->table_name;
@@ -830,8 +839,8 @@ class Transacao {
         $query = "SELECT 
                     g.nome as grupo_nome,
                     COUNT(t.id) as total_transacoes,
-                    SUM(CASE WHEN t.tipo = 'receita' AND t.is_confirmed = 1 THEN t.valor ELSE 0 END) as receitas,
-                    SUM(CASE WHEN t.tipo = 'despesa' AND t.is_confirmed = 1 THEN t.valor ELSE 0 END) as despesas,
+                    SUM(CASE WHEN t.tipo = 'receita' AND t.is_confirmed = 1 AND (t.is_transfer IS NULL OR t.is_transfer = 0) THEN t.valor ELSE 0 END) as receitas,
+                    SUM(CASE WHEN t.tipo = 'despesa' AND t.is_confirmed = 1 AND (t.is_transfer IS NULL OR t.is_transfer = 0) THEN t.valor ELSE 0 END) as despesas,
                     COUNT(DISTINCT t.usuario_id) as usuarios_ativos
                   FROM " . $this->table_name . " t
                   LEFT JOIN usuarios u ON t.usuario_id = u.id

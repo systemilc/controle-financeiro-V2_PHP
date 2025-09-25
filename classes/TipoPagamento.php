@@ -183,8 +183,8 @@ class TipoPagamento {
     public function getUsageStats() {
         $query = "SELECT 
                     COUNT(t.id) as total_transacoes,
-                    SUM(CASE WHEN t.tipo = 'receita' THEN t.valor ELSE 0 END) as total_receitas,
-                    SUM(CASE WHEN t.tipo = 'despesa' THEN t.valor ELSE 0 END) as total_despesas
+                    SUM(CASE WHEN t.tipo = 'receita' AND (t.is_transfer IS NULL OR t.is_transfer = 0) THEN t.valor ELSE 0 END) as total_receitas,
+                    SUM(CASE WHEN t.tipo = 'despesa' AND (t.is_transfer IS NULL OR t.is_transfer = 0) THEN t.valor ELSE 0 END) as total_despesas
                   FROM " . $this->table_name . " tp
                   LEFT JOIN transacoes t ON tp.id = t.tipo_pagamento_id
                   WHERE tp.id = ?";

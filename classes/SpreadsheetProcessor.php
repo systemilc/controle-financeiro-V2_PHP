@@ -303,8 +303,19 @@ class SpreadsheetProcessor {
             }
             
             // Validar dados obrigatórios
-            if (empty($item['produto']) || empty($item['quantidade']) || empty($item['valor_unitario'])) {
+            $produto = isset($item['produto']) ? $item['produto'] : '';
+            $quantidade = isset($item['quantidade']) ? $item['quantidade'] : '';
+            $valor_unitario = isset($item['valor_unitario']) ? $item['valor_unitario'] : '';
+            
+            if (empty($produto) || empty($quantidade) || empty($valor_unitario)) {
+                error_log("SpreadsheetProcessor: Linha $row_number pulada - dados obrigatórios ausentes. Produto: '$produto', Quantidade: '$quantidade', Valor: '$valor_unitario'");
                 return null; // Pular linha inválida
+            }
+            
+            // Validar se a data foi parseada corretamente
+            if (empty($item['data'])) {
+                error_log("SpreadsheetProcessor: Linha $row_number - data vazia, usando data atual");
+                $item['data'] = date('Y-m-d');
             }
             
             return $item;
@@ -319,17 +330,23 @@ class SpreadsheetProcessor {
      * Converte data para formato do banco
      */
     private function parseDate($date_str) {
+        // Log para debug
+        error_log("SpreadsheetProcessor: Tentando parsear data: '$date_str'");
+        
         // Tentar diferentes formatos
         $formats = ['d/m/Y', 'd-m-Y', 'Y-m-d', 'd/m/y', 'd-m-y'];
         
         foreach ($formats as $format) {
             $date = DateTime::createFromFormat($format, $date_str);
             if ($date !== false) {
-                return $date->format('Y-m-d');
+                $resultado = $date->format('Y-m-d');
+                error_log("SpreadsheetProcessor: Data parseada com sucesso: '$date_str' -> '$resultado' (formato: $format)");
+                return $resultado;
             }
         }
         
         // Se não conseguir parsear, usar data atual
+        error_log("SpreadsheetProcessor: Não foi possível parsear data '$date_str', usando data atual");
         return date('Y-m-d');
     }
     
@@ -388,7 +405,7 @@ class SpreadsheetProcessor {
                 // Calcular valor total
                 $valor_total = 0;
                 foreach ($fornecedor_data['itens'] as $item) {
-                    $valor_total += $item['valor_total'];
+                    $valor_total += $item['valor_total'] ?? 0;
                 }
                 
                 // Criar compra
@@ -483,9 +500,9 @@ class SpreadsheetProcessor {
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':compra_id', $compra_id);
             $stmt->bindParam(':produto_id', $produto_id);
-            $stmt->bindParam(':quantidade', $item['quantidade']);
-            $stmt->bindParam(':preco_unitario', $item['valor_unitario']);
-            $stmt->bindParam(':preco_total', $item['valor_total']);
+            $stmt->bindParam(':quantidade', $item['quantidade'] ?? 0);
+            $stmt->bindParam(':preco_unitario', $item['valor_unitario'] ?? 0);
+            $stmt->bindParam(':preco_total', $item['valor_total'] ?? 0);
             $stmt->execute();
         }
     }
@@ -508,8 +525,8 @@ class SpreadsheetProcessor {
         
         // Criar novo produto
         $produto->codigo = $item['codigo_produto'];
-        $produto->nome = $item['produto'];
-        $produto->preco = $item['valor_unitario'];
+        $produto->nome = $item['produto'] ?? '';
+        $produto->preco = $item['valor_unitario'] ?? 0;
         $produto->categoria_id = 1; // Categoria padrão
         
         return $produto->create();

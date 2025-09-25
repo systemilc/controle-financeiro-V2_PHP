@@ -93,6 +93,7 @@ foreach($contas as $c) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
+    <link href="assets/css/mobile-menu.css" rel="stylesheet">
     <style>
         .main-content {
             background: #f8f9fa;
@@ -145,7 +146,7 @@ foreach($contas as $c) {
             <?php include 'includes/sidebar.php'; ?>
 
             <!-- Main Content -->
-            <div class="col-md-9 col-lg-10">
+            <div class="col-12 col-md-9 col-lg-10">
                 <div class="main-content">
                     <!-- Header -->
                     <div class="bg-white shadow-sm p-3 mb-4">
@@ -212,10 +213,10 @@ foreach($contas as $c) {
                                     // Buscar estatísticas da conta
                                     $query_stats = "SELECT 
                                         COUNT(*) as total_transacoes,
-                                        SUM(CASE WHEN tipo = 'receita' THEN valor ELSE 0 END) as total_receitas,
-                                        SUM(CASE WHEN tipo = 'despesa' THEN valor ELSE 0 END) as total_despesas,
-                                        SUM(CASE WHEN tipo = 'receita' AND MONTH(data_transacao) = MONTH(CURDATE()) AND YEAR(data_transacao) = YEAR(CURDATE()) THEN valor ELSE 0 END) as receitas_mes,
-                                        SUM(CASE WHEN tipo = 'despesa' AND MONTH(data_transacao) = MONTH(CURDATE()) AND YEAR(data_transacao) = YEAR(CURDATE()) THEN valor ELSE 0 END) as despesas_mes
+                                        SUM(CASE WHEN tipo = 'receita' AND (is_transfer IS NULL OR is_transfer = 0) THEN valor ELSE 0 END) as total_receitas,
+                                        SUM(CASE WHEN tipo = 'despesa' AND (is_transfer IS NULL OR is_transfer = 0) THEN valor ELSE 0 END) as total_despesas,
+                                        SUM(CASE WHEN tipo = 'receita' AND (is_transfer IS NULL OR is_transfer = 0) AND MONTH(data_transacao) = MONTH(CURDATE()) AND YEAR(data_transacao) = YEAR(CURDATE()) THEN valor ELSE 0 END) as receitas_mes,
+                                        SUM(CASE WHEN tipo = 'despesa' AND (is_transfer IS NULL OR is_transfer = 0) AND MONTH(data_transacao) = MONTH(CURDATE()) AND YEAR(data_transacao) = YEAR(CURDATE()) THEN valor ELSE 0 END) as despesas_mes
                                         FROM transacoes t
                                         WHERE conta_id = :conta_id 
                                         AND usuario_id IN (SELECT id FROM usuarios WHERE grupo_id = :grupo_id)";
@@ -477,6 +478,93 @@ foreach($contas as $c) {
         // Atualizar a cada 30 segundos
         updateNotificationCount();
         setInterval(updateNotificationCount, 30000);
+    </script>
+    
+    <!-- Script Mobile Menu -->
+    <script>
+        // JavaScript para menu mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                console.log('🚀 Mobile menu script carregado');
+                
+                // Verificar se Bootstrap está disponível
+                if (typeof bootstrap === 'undefined') {
+                    console.error('Bootstrap não está carregado!');
+                    return;
+                }
+                
+                // Sincronizar contador de notificações
+                function syncNotificationCount() {
+                    try {
+                        const desktopCount = document.getElementById('notification-count');
+                        const mobileCount = document.getElementById('notification-count-mobile');
+                        
+                        if (desktopCount && mobileCount) {
+                            const count = desktopCount.textContent;
+                            mobileCount.textContent = count;
+                            mobileCount.style.display = count > 0 ? 'inline' : 'none';
+                        }
+                    } catch (error) {
+                        console.error('Erro ao sincronizar notificações:', error);
+                    }
+                }
+                
+                // Sincronizar inicialmente
+                syncNotificationCount();
+                
+                // Fechar menu mobile ao clicar em um link
+                const mobileLinks = document.querySelectorAll('#mobileSidebar .nav-link');
+                console.log('Links encontrados:', mobileLinks.length);
+                
+                mobileLinks.forEach(function(link) {
+                    link.addEventListener('click', function(e) {
+                        console.log('Link clicado:', this.href);
+                        
+                        // Fechar o offcanvas após um delay
+                        setTimeout(function() {
+                            try {
+                                const offcanvasElement = document.getElementById('mobileSidebar');
+                                if (offcanvasElement) {
+                                    const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasElement);
+                                    if (offcanvas) {
+                                        offcanvas.hide();
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Erro ao fechar menu:', error);
+                            }
+                        }, 150);
+                    });
+                });
+                
+                // Adicionar indicador visual para página ativa
+                try {
+                    const currentPage = window.location.pathname.split('/').pop() || 'index.php';
+                    const activeLinks = document.querySelectorAll('#mobileSidebar .nav-link');
+                    
+                    // Remover todas as classes ativas primeiro
+                    activeLinks.forEach(function(link) {
+                        link.classList.remove('active');
+                    });
+                    
+                    // Adicionar classe ativa para a página atual
+                    activeLinks.forEach(function(link) {
+                        const href = link.getAttribute('href');
+                        if (href === currentPage) {
+                            link.classList.add('active');
+                            console.log('Página ativa definida:', href);
+                        }
+                    });
+                } catch (error) {
+                    console.error('Erro ao definir página ativa:', error);
+                }
+                
+                console.log('✅ Mobile menu script inicializado com sucesso');
+                
+            } catch (error) {
+                console.error('❌ Erro geral no script mobile:', error);
+            }
+        });
     </script>
 </body>
 </html>

@@ -8,7 +8,9 @@ $userName = $_SESSION['username'] ?? '';
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="index.php">
-            <i class="fas fa-chart-line me-2"></i>Controle Financeiro
+            <i class="fas fa-chart-line me-2"></i>
+            <span class="d-none d-sm-inline">Controle Financeiro</span>
+            <span class="d-sm-none">CF</span>
         </a>
         
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
