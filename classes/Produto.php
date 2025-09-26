@@ -159,6 +159,9 @@ class Produto {
         $stmt->bindParam(1, $this->id);
         $stmt->execute();
         $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Buscar fornecedor com preço mais barato
+        $fornecedor_mais_barato = $this->getFornecedorMaisBarato();
 
         // Se não há dados de itens de compra, buscar em transações de importação
         if (($stats['total_compras'] ?? 0) == 0) {
@@ -206,8 +209,49 @@ class Produto {
             'primeira_compra' => $stats['primeira_compra'] ?? null,
             'ultima_compra' => $stats['ultima_compra'] ?? null,
             'preco_mais_barato' => (float)($stats['preco_mais_barato'] ?? 0),
-            'preco_mais_caro' => (float)($stats['preco_mais_caro'] ?? 0)
+            'preco_mais_caro' => (float)($stats['preco_mais_caro'] ?? 0),
+            'fornecedor_mais_barato' => $fornecedor_mais_barato
         ];
+    }
+
+    // Obter fornecedor com preço mais barato
+    private function getFornecedorMaisBarato() {
+        $query = "SELECT 
+                    f.nome as fornecedor_nome,
+                    f.cnpj,
+                    ic.preco_unitario as preco_mais_barato,
+                    c.data_compra,
+                    c.numero_nota
+                  FROM itens_compra ic
+                  LEFT JOIN compras c ON ic.compra_id = c.id
+                  LEFT JOIN fornecedores f ON c.fornecedor_id = f.id
+                  WHERE ic.produto_id = ?
+                  AND ic.preco_unitario = (
+                      SELECT MIN(ic2.preco_unitario)
+                      FROM itens_compra ic2
+                      WHERE ic2.produto_id = ?
+                  )
+                  ORDER BY c.data_compra DESC
+                  LIMIT 1";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $this->id);
+        $stmt->bindParam(2, $this->id);
+        $stmt->execute();
+        
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($result) {
+            return [
+                'fornecedor_nome' => $result['fornecedor_nome'],
+                'cnpj' => $result['cnpj'],
+                'preco_mais_barato' => (float)$result['preco_mais_barato'],
+                'data_compra' => $result['data_compra'],
+                'numero_nota' => $result['numero_nota']
+            ];
+        }
+        
+        return null;
     }
 
     // Obter histórico de compras

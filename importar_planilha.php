@@ -75,6 +75,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $message = "Erro ao processar planilha: " . $e->getMessage();
             $message_type = 'danger';
             
+            // Adicionar informações de debug se disponíveis
+            if (isset($result['debug_info'])) {
+                $message .= "<br><small>Arquivo: " . basename($result['debug_info']['filename']) . "</small>";
+                error_log("Importar Planilha: Debug info: " . json_encode($result['debug_info']));
+            }
+            
             // Limpar arquivo temporário se existir
             if (isset($file_path) && file_exists($file_path)) {
                 unlink($file_path);
@@ -86,12 +92,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'confirmar_importacao') {
         try {
             $dados_importacao = json_decode($_POST['dados_importacao'], true);
+            $vinculacoes_produtos = isset($_POST['vinculacoes_produtos']) ? json_decode($_POST['vinculacoes_produtos'], true) : [];
             
             // Debug das configurações recebidas
             error_log("Importar Planilha: Dados recebidos do formulário:");
             error_log("parcelamento_ativo: " . (isset($_POST['parcelamento_ativo']) ? 'SIM' : 'NÃO'));
             error_log("quantidade_parcelas: " . (isset($_POST['quantidade_parcelas']) ? $_POST['quantidade_parcelas'] : 'NÃO DEFINIDO'));
             error_log("tipo_parcelamento: " . (isset($_POST['tipo_parcelamento']) ? $_POST['tipo_parcelamento'] : 'NÃO DEFINIDO'));
+            error_log("vinculacoes_produtos: " . json_encode($vinculacoes_produtos));
+            error_log("vinculacoes_produtos count: " . count($vinculacoes_produtos));
+            foreach ($vinculacoes_produtos as $chave => $valor) {
+                error_log("Vinculação: $chave = $valor");
+            }
             
             $configuracoes = [
                 'conta_id' => $_POST['conta_id'],
@@ -111,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             error_log("Quantidade parcelas: " . $configuracoes['parcelamento']['quantidade']);
             error_log("Tipo parcelamento: " . $configuracoes['parcelamento']['tipo']);
             
-            $result = $importacao->importarDados($dados_importacao, $configuracoes);
+            $result = $importacao->importarDados($dados_importacao, $configuracoes, $vinculacoes_produtos);
             
             if ($result['success']) {
                 $message = 'Importação realizada com sucesso! ' . 
@@ -145,6 +157,74 @@ $tipos_pagamento = $importacao->getTiposPagamento();
     <title>Importar Planilha - Controle Financeiro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+    /* Estilos básicos para o modal - ZERO ANIMAÇÕES */
+    #modalProdutos {
+        font-family: Arial, sans-serif;
+    }
+    
+    #modalProdutos .card {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        background: white;
+    }
+    
+    #modalProdutos .card-header {
+        background-color: #f0f0f0;
+        border-bottom: 1px solid #ccc;
+        padding: 15px;
+        font-weight: bold;
+    }
+    
+    #modalProdutos .card-body {
+        padding: 15px;
+    }
+    
+    #modalProdutos .alert {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 3px;
+        border: 1px solid;
+    }
+    
+    #modalProdutos .alert-warning {
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+        color: #856404;
+    }
+    
+    #modalProdutos .alert-danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+    
+    #modalProdutos .alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+    
+    #modalProdutos .alert-info {
+        background-color: #d1ecf1;
+        border-color: #bee5eb;
+        color: #0c5460;
+    }
+    
+    #modalProdutos .form-check {
+        margin-bottom: 8px;
+    }
+    
+    #modalProdutos .form-check-input {
+        margin-right: 5px;
+    }
+    
+    #modalProdutos .form-check-label {
+        cursor: pointer;
+    }
+    </style>
     <link href="assets/css/style.css" rel="stylesheet">
     <link href="assets/css/mobile-menu.css" rel="stylesheet">
 </head>
@@ -189,8 +269,12 @@ $tipos_pagamento = $importacao->getTiposPagamento();
                                     </div>
                                 </div>
                                 
-                                <button type="submit" class="btn btn-success" id="importBtn" disabled>
+                                <button type="submit" class="btn btn-success" id="importBtn" disabled style="z-index: 1000; position: relative;">
                                     <i class="fas fa-upload"></i> Processar Planilha
+                                </button>
+                                
+                                <button type="button" class="btn btn-info ms-2" onclick="testarBotao()" style="z-index: 1000; position: relative;">
+                                    <i class="fas fa-test"></i> Testar Botão
                                 </button>
                             </form>
                         </div>
@@ -295,12 +379,35 @@ $tipos_pagamento = $importacao->getTiposPagamento();
                                             <td><?php echo htmlspecialchars($compra['compra']['nota']); ?></td>
                                             <td>
                                                 <span class="badge bg-secondary"><?php echo count($compra['produtos']); ?> itens</span>
+                                            <button class="btn btn-sm btn-outline-primary ms-2" 
+                                                    onclick="testarBotaoVerProdutos('<?php echo $compra['compra']['nota']; ?>')">
+                                                <i class="fas fa-eye"></i> Ver Produtos
+                                            </button>
                                             </td>
                                             <td><strong>R$ <?php echo number_format($compra['compra']['valor_total'], 2, ',', '.'); ?></strong></td>
                                         </tr>
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
+                            </div>
+                            
+                            <!-- Modal completamente customizado - SEM BOOTSTRAP -->
+                            <div id="modalProdutos" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000;">
+                                <div id="modalContent" style="position: absolute; top: 50%; left: 50%; margin-left: -600px; margin-top: -300px; width: 1200px; height: 600px; background: white; border: 2px solid #333; border-radius: 10px; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
+                                    <div style="height: 60px; background: #333; color: white; padding: 15px 20px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+                                        <h3 style="margin: 0; font-size: 18px;">Produtos da Compra</h3>
+                                        <button onclick="fecharModal()" style="background: #ff4444; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; font-weight: bold;">×</button>
+                                    </div>
+                                    <div id="conteudoProdutos" style="height: 480px; padding: 20px; overflow-y: auto; background: #f9f9f9;">
+                                        <!-- Conteúdo será carregado via JavaScript -->
+                                    </div>
+                                    <div style="height: 60px; background: #333; color: white; padding: 15px 20px; border-radius: 0 0 8px 8px; display: flex; justify-content: space-between; align-items: center;">
+                                        <button onclick="fecharModal()" style="background: #666; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer;">Fechar</button>
+                                        <button onclick="salvarVinculacoes()" style="background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer;">
+                                            Salvar Vinculações
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -408,14 +515,28 @@ $tipos_pagamento = $importacao->getTiposPagamento();
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM carregado, iniciando script...');
+    
     const fileInput = document.getElementById('spreadsheetFile');
     const importBtn = document.getElementById('importBtn');
     const parcelamentoCheckbox = document.getElementById('parcelamento_ativo');
     const parcelamentoConfig = document.getElementById('parcelamento_config');
     
+    console.log('Elementos encontrados:', {
+        fileInput: fileInput,
+        importBtn: importBtn,
+        parcelamentoCheckbox: parcelamentoCheckbox,
+        parcelamentoConfig: parcelamentoConfig
+    });
+    
     // Habilitar/desabilitar botão de upload
     if (fileInput) {
+        console.log('fileInput encontrado, adicionando event listener');
+        
         fileInput.addEventListener('change', function(e) {
+            console.log('Evento change disparado');
+            console.log('Arquivos selecionados:', e.target.files.length);
+            
             if (e.target.files.length > 0) {
                 const file = e.target.files[0];
                 console.log('Arquivo selecionado:', file.name, file.size, file.type);
@@ -425,16 +546,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 const allowedExtensions = ['csv', 'tsv', 'txt', 'xlsx', 'xls'];
                 const fileExtension = file.name.split('.').pop().toLowerCase();
                 
+                console.log('Verificação de arquivo:', {
+                    fileType: file.type,
+                    fileExtension: fileExtension,
+                    allowedTypes: allowedTypes,
+                    allowedExtensions: allowedExtensions
+                });
+                
                 if (allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension)) {
                     importBtn.disabled = false;
                     console.log('Arquivo válido, botão habilitado');
+                    console.log('Botão disabled:', importBtn.disabled);
                 } else {
                     alert('Por favor, selecione apenas arquivos CSV, TSV, TXT, XLSX ou XLS.');
                     e.target.value = '';
                     importBtn.disabled = true;
+                    console.log('Arquivo inválido, botão desabilitado');
                 }
             } else {
                 importBtn.disabled = true;
+                console.log('Nenhum arquivo selecionado, botão desabilitado');
             }
         });
         
@@ -463,9 +594,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Validação do formulário
-    const configForm = document.getElementById('configForm');
-    if (configForm) {
-        configForm.addEventListener('submit', function(e) {
+    const configFormValidation = document.getElementById('configForm');
+    if (configFormValidation) {
+        configFormValidation.addEventListener('submit', function(e) {
             const parcelamentoAtivo = document.getElementById('parcelamento_ativo').checked;
             
             if (parcelamentoAtivo) {
@@ -486,7 +617,411 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Dados dos produtos para JavaScript (definidos globalmente)
+    window.dadosProdutos = <?php echo isset($preview_data['dados']) ? json_encode($preview_data['dados']) : '[]'; ?>;
+    const dadosProdutos = window.dadosProdutos;
+    const vinculacoesProdutos = {};
+    
+    
+    // Função para coletar vinculações antes do envio
+    function coletarVinculacoes() {
+        console.log('=== COLETANDO VINCULAÇÕES PARA ENVIO ===');
+        
+        // Usar vinculações salvas anteriormente no modal
+        const vinculacoes = window.vinculacoesProdutos || {};
+        
+        console.log('Vinculações disponíveis:', vinculacoes);
+        console.log('Quantidade de vinculações:', Object.keys(vinculacoes).length);
+        
+        // Adicionar campo hidden com as vinculações
+        const configForm = document.getElementById('configForm');
+        if (configForm) {
+            console.log('Formulário encontrado:', configForm);
+            
+            let hiddenInput = document.getElementById('vinculacoes_produtos');
+            if (!hiddenInput) {
+                console.log('Criando campo hidden...');
+                hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'vinculacoes_produtos';
+                hiddenInput.id = 'vinculacoes_produtos';
+                configForm.appendChild(hiddenInput);
+                console.log('Campo hidden criado');
+            } else {
+                console.log('Campo hidden já existe');
+            }
+            
+            const jsonVinculacoes = JSON.stringify(vinculacoes);
+            hiddenInput.value = jsonVinculacoes;
+            
+            console.log('Valor do campo hidden:', hiddenInput.value);
+            console.log('Campo hidden adicionado ao formulário:', configForm.contains(hiddenInput));
+        } else {
+            console.log('❌ Formulário não encontrado!');
+        }
+        
+        console.log('=== VINCULAÇÕES COLETADAS PARA ENVIO ===');
+        return vinculacoes;
+    }
+    
+    // Interceptar envio do formulário para coletar vinculações
+    const configForm = document.getElementById('configForm');
+    if (configForm) {
+        configForm.addEventListener('submit', function(e) {
+            console.log('Formulário sendo enviado...');
+            console.log('Vinculações antes de coletar:', window.vinculacoesProdutos);
+            coletarVinculacoes();
+            
+            // Verificar se as vinculações foram adicionadas ao formulário
+            const hiddenInput = document.getElementById('vinculacoes_produtos');
+            if (hiddenInput) {
+                console.log('Campo hidden encontrado:', hiddenInput.value);
+            } else {
+                console.log('❌ Campo hidden NÃO encontrado!');
+            }
+        });
+    }
+    
+    // Verificar se há dados de preview antes de executar funções relacionadas
+    if (dadosProdutos && dadosProdutos.length > 0) {
+        console.log('Dados de produtos carregados:', dadosProdutos.length, 'compras');
+    } else {
+        console.log('Nenhum dado de preview disponível');
+    }
 });
+
+// ===== FUNÇÕES GLOBAIS =====
+
+// Função de teste para debug do botão
+function testarBotaoVerProdutos(notaCompra) {
+    console.log('=== TESTE BOTÃO VER PRODUTOS ===');
+    console.log('Nota recebida:', notaCompra);
+    console.log('Função mostrarProdutos existe?', typeof mostrarProdutos);
+    console.log('Função desabilitarImportar existe?', typeof desabilitarImportar);
+    console.log('window.dadosProdutos:', window.dadosProdutos);
+    
+    try {
+        if (typeof mostrarProdutos === 'function') {
+            console.log('Chamando mostrarProdutos...');
+            mostrarProdutos(notaCompra);
+        } else {
+            console.error('❌ Função mostrarProdutos não encontrada!');
+            alert('Erro: Função mostrarProdutos não encontrada!');
+        }
+        
+        if (typeof desabilitarImportar === 'function') {
+            console.log('Chamando desabilitarImportar...');
+            desabilitarImportar();
+        } else {
+            console.error('❌ Função desabilitarImportar não encontrada!');
+        }
+    } catch (error) {
+        console.error('❌ Erro ao executar funções:', error);
+        alert('Erro: ' + error.message);
+    }
+}
+
+// Função para mostrar produtos de uma compra
+function mostrarProdutos(notaCompra) {
+    console.log('mostrarProdutos chamada para nota:', notaCompra);
+    console.log('dadosProdutos disponíveis:', window.dadosProdutos);
+    
+    const dadosProdutos = window.dadosProdutos || <?php echo isset($preview_data['dados']) ? json_encode($preview_data['dados']) : '[]'; ?>;
+    const compra = dadosProdutos.find(c => c.compra.nota === notaCompra);
+    
+    console.log('Compra encontrada:', compra);
+    
+    if (!compra) {
+        console.log('❌ Compra não encontrada para nota:', notaCompra);
+        return;
+    }
+    
+    let html = '<div class="row">';
+    
+    compra.produtos.forEach((produto, index) => {
+        const chaveProduto = notaCompra + '_' + index;
+        
+        html += '<div class="col-md-6 mb-4">';
+        html += '<div class="card">';
+        html += '<div class="card-header">';
+        html += '<h6 class="mb-0">' + produto.nome + '</h6>';
+        html += '<small class="text-muted">Código: ' + produto.codigo + '</small>';
+        html += '</div>';
+        html += '<div class="card-body">';
+        
+        // Informações do produto atual
+        html += '<div class="mb-3">';
+        html += '<strong>Produto da Planilha:</strong><br>';
+        html += 'Quantidade: ' + produto.quantidade + '<br>';
+        html += 'Preço Unitário: R$ ' + (parseFloat(produto.valor_unitario) || 0).toFixed(2).replace('.', ',') + '<br>';
+        html += 'Valor Total: R$ ' + (parseFloat(produto.valor_total) || 0).toFixed(2).replace('.', ',');
+        html += '</div>';
+        
+                // Sempre mostrar opções de vinculação
+                html += '<div class="mb-3">';
+                html += '<label class="form-label"><strong>Escolha uma opção:</strong></label>';
+                
+                // Opção: Criar novo produto
+                html += '<div class="form-check mb-2">';
+                html += '<input class="form-check-input" type="radio" name="produto_' + chaveProduto + '" value="novo" id="novo_' + chaveProduto + '" checked>';
+                html += '<label class="form-check-label" for="novo_' + chaveProduto + '">';
+                html += '<strong>Criar novo produto</strong> (recomendado se for realmente diferente)';
+                html += '</label>';
+                html += '</div>';
+                
+                // Se tem produtos similares, mostrar alerta
+                if (produto.tem_similares && produto.produtos_existentes.length > 0) {
+                    html += '<div class="alert alert-warning">';
+                    html += '<i class="fas fa-exclamation-triangle"></i> ';
+                    html += '<strong>Produtos similares encontrados automaticamente!</strong>';
+                    html += '</div>';
+                    
+                    // Melhor preço histórico
+                    if (produto.melhor_preco_historico) {
+                        const melhorPreco = produto.melhor_preco_historico;
+                        const precoAtual = parseFloat(produto.valor_unitario);
+                        
+                        // Verificar se melhorPreco.preco é um número válido
+                        const precoHistorico = parseFloat(melhorPreco.preco);
+                        
+                        if (!isNaN(precoHistorico) && !isNaN(precoAtual)) {
+                            const diferenca = precoAtual - precoHistorico;
+                            const percentual = (diferenca / precoHistorico) * 100;
+                            
+                            html += '<div class="alert ' + (diferenca > 0 ? 'alert-danger' : 'alert-success') + '">';
+                            html += '<strong>Comparação de Preços:</strong><br>';
+                            html += 'Melhor preço histórico: R$ ' + precoHistorico.toFixed(2).replace('.', ',') + '<br>';
+                            html += 'Preço atual: R$ ' + precoAtual.toFixed(2).replace('.', ',') + '<br>';
+                            html += 'Diferença: ' + (diferenca > 0 ? '+' : '') + diferenca.toFixed(2).replace('.', ',') + 
+                                   ' (' + (diferenca > 0 ? '+' : '') + percentual.toFixed(1) + '%)';
+                            html += '</div>';
+                        } else {
+                            html += '<div class="alert alert-warning">';
+                            html += '<strong>Comparação de Preços:</strong><br>';
+                            html += 'Preço atual: R$ ' + precoAtual.toFixed(2).replace('.', ',') + '<br>';
+                            html += 'Preço histórico não disponível para comparação';
+                            html += '</div>';
+                        }
+                    }
+                    
+                    // Opções: Vincular a produtos similares
+                    produto.produtos_existentes.forEach(produtoExistente => {
+                        html += '<div class="form-check mb-2">';
+                        html += '<input class="form-check-input" type="radio" name="produto_' + chaveProduto + '" value="' + produtoExistente.id + '" id="existente_' + chaveProduto + '_' + produtoExistente.id + '">';
+                        html += '<label class="form-check-label" for="existente_' + chaveProduto + '_' + produtoExistente.id + '">';
+                        html += '<strong>Vincular a produto similar:</strong> ' + produtoExistente.nome + '<br>';
+                        html += '<small class="text-muted">';
+                        html += 'Código: ' + produtoExistente.codigo + ' | ';
+                        html += 'Preço mais barato: R$ ' + (parseFloat(produtoExistente.preco_mais_barato) || 0).toFixed(2).replace('.', ',') + ' | ';
+                        html += 'Compras: ' + produtoExistente.total_compras + ' | ';
+                        html += 'Fornecedores: ' + produtoExistente.total_fornecedores;
+                        html += '</small>';
+                        html += '</label>';
+                        html += '</div>';
+                    });
+                }
+                
+                // Sempre mostrar todos os produtos para vinculação manual
+                if (produto.todos_produtos_disponiveis && produto.todos_produtos_disponiveis.length > 0) {
+                    html += '<div class="alert alert-info">';
+                    html += '<i class="fas fa-search"></i> ';
+                    html += '<strong>Ou vincular manualmente a qualquer produto existente:</strong>';
+                    html += '</div>';
+                    
+                    // Criar um select para facilitar a busca
+                    html += '<div class="mb-3">';
+                    html += '<label class="form-label">Buscar produto para vincular:</label>';
+                    html += '<select class="form-select" onchange="selecionarProdutoExistente(\'' + chaveProduto + '\', this.value)">';
+                    html += '<option value="">Selecione um produto...</option>';
+                    
+                    produto.todos_produtos_disponiveis.forEach(produtoExistente => {
+                        const precoBarato = produtoExistente.preco_mais_barato ? (parseFloat(produtoExistente.preco_mais_barato) || 0).toFixed(2).replace('.', ',') : 'N/A';
+                        html += '<option value="' + produtoExistente.id + '">';
+                        html += produtoExistente.nome + ' (Código: ' + produtoExistente.codigo + ' | Preço: R$ ' + precoBarato + ')';
+                        html += '</option>';
+                    });
+                    
+                    html += '</select>';
+                    html += '</div>';
+                    
+                    // Opções: Vincular a produtos selecionados manualmente
+                    produto.todos_produtos_disponiveis.forEach(produtoExistente => {
+                        html += '<div class="form-check mb-2" id="opcao_manual_' + chaveProduto + '_' + produtoExistente.id + '" style="display: none;">';
+                        html += '<input class="form-check-input" type="radio" name="produto_' + chaveProduto + '" value="' + produtoExistente.id + '" id="manual_' + chaveProduto + '_' + produtoExistente.id + '">';
+                        html += '<label class="form-check-label" for="manual_' + chaveProduto + '_' + produtoExistente.id + '">';
+                        html += '<strong>Vincular a:</strong> ' + produtoExistente.nome + '<br>';
+                        html += '<small class="text-muted">';
+                        html += 'Código: ' + produtoExistente.codigo + ' | ';
+                        html += 'Preço mais barato: R$ ' + (parseFloat(produtoExistente.preco_mais_barato) || 0).toFixed(2).replace('.', ',') + ' | ';
+                        html += 'Compras: ' + produtoExistente.total_compras + ' | ';
+                        html += 'Fornecedores: ' + produtoExistente.total_fornecedores;
+                        if (produtoExistente.fornecedores) {
+                            html += '<br>Fornecedores: ' + produtoExistente.fornecedores;
+                        }
+                        html += '</small>';
+                        html += '</label>';
+                        html += '</div>';
+                    });
+                }
+                
+                html += '</div>';
+        
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+    });
+    
+    html += '</div>';
+    
+    // Limpar conteúdo anterior
+    const conteudoProdutos = document.getElementById('conteudoProdutos');
+    conteudoProdutos.innerHTML = '';
+    
+    // Adicionar novo conteúdo
+    conteudoProdutos.innerHTML = html;
+    
+    // Mostrar modal - CONTROLE TOTAL
+    const modalElement = document.getElementById('modalProdutos');
+    
+    // Mostrar modal instantaneamente
+    modalElement.style.display = 'block';
+    
+    // Prevenir scroll do body
+    document.body.style.overflow = 'hidden';
+    
+    // Função para fechar modal
+    window.fecharModal = function() {
+        modalElement.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    };
+    
+    // Evento para fechar clicando fora
+    modalElement.onclick = function(e) {
+        if (e.target === modalElement) {
+            fecharModal();
+        }
+    };
+}
+
+// Função para selecionar produto existente via select
+function selecionarProdutoExistente(chaveProduto, produtoId) {
+    // Esconder todas as opções manuais
+    const opcoesManuais = document.querySelectorAll('[id^="opcao_manual_' + chaveProduto + '_"]');
+    opcoesManuais.forEach(opcao => {
+        opcao.style.display = 'none';
+    });
+    
+    // Mostrar a opção selecionada
+    if (produtoId) {
+        const opcaoSelecionada = document.getElementById('opcao_manual_' + chaveProduto + '_' + produtoId);
+        if (opcaoSelecionada) {
+            opcaoSelecionada.style.display = 'block';
+            // Selecionar automaticamente o radio button
+            const radioButton = document.getElementById('manual_' + chaveProduto + '_' + produtoId);
+            if (radioButton) {
+                radioButton.checked = true;
+            }
+        }
+    }
+}
+
+// Função para desabilitar botão de importar
+function desabilitarImportar() {
+    const importBtn = document.getElementById('importBtn');
+    if (importBtn) {
+        importBtn.disabled = true;
+        importBtn.style.opacity = '0.5';
+        importBtn.title = 'Configure as vinculações de produtos primeiro';
+        console.log('Botão de importar desabilitado');
+    }
+}
+
+// Função para habilitar botão de importar
+function habilitarImportar() {
+    const importBtn = document.getElementById('importBtn');
+    if (importBtn) {
+        importBtn.disabled = false;
+        importBtn.style.opacity = '1';
+        importBtn.title = '';
+        console.log('Botão de importar habilitado');
+    }
+}
+
+// Função para salvar vinculações
+function salvarVinculacoes() {
+    console.log('=== SALVANDO VINCULAÇÕES ===');
+    
+    // Coletar todas as vinculações
+    const vinculacoes = {};
+    const radioButtons = document.querySelectorAll('input[type="radio"]:checked');
+    
+    console.log('Radio buttons encontrados:', radioButtons.length);
+    
+    radioButtons.forEach(radio => {
+        const name = radio.name;
+        const value = radio.value;
+        
+        console.log('Radio button:', name, '=', value);
+        
+        if (name.startsWith('produto_')) {
+            // Remover o prefixo 'produto_' para criar a chave correta
+            const chave = name.replace('produto_', '');
+            vinculacoes[chave] = value;
+            console.log('✅ Vinculação encontrada:', chave, '=', value);
+        }
+    });
+    
+    console.log('Total de vinculações coletadas:', Object.keys(vinculacoes).length);
+    console.log('Vinculações:', vinculacoes);
+    
+    // Armazenar vinculações globalmente
+    window.vinculacoesProdutos = vinculacoes;
+    
+    // Verificar se foi salvo corretamente
+    console.log('window.vinculacoesProdutos após salvar:', window.vinculacoesProdutos);
+    
+    // Mostrar resumo das vinculações
+    let resumo = 'Vinculações salvas:\n';
+    Object.keys(vinculacoes).forEach(chave => {
+        const valor = vinculacoes[chave];
+        if (valor === 'novo') {
+            resumo += `• ${chave}: Criar novo produto\n`;
+        } else {
+            resumo += `• ${chave}: Vincular ao produto ID ${valor}\n`;
+        }
+    });
+    
+    alert(resumo);
+    
+    // Fechar modal
+    fecharModal();
+    
+    // Habilitar botão de importar
+    habilitarImportar();
+    
+    console.log('=== VINCULAÇÕES SALVAS COM SUCESSO ===');
+}
+
+// Função de teste para debug (definida globalmente)
+function testarBotao() {
+    console.log('Função testarBotao chamada');
+    
+    const importBtn = document.getElementById('importBtn');
+    const fileInput = document.getElementById('spreadsheetFile');
+    
+    console.log('Estado atual:', {
+        botaoDisabled: importBtn.disabled,
+        arquivoSelecionado: fileInput.files.length > 0,
+        nomeArquivo: fileInput.files.length > 0 ? fileInput.files[0].name : 'nenhum'
+    });
+    
+    // Forçar habilitação do botão para teste
+    importBtn.disabled = false;
+    console.log('Botão forçado para habilitado');
+    
+    alert('Botão testado! Verifique o console para mais detalhes.');
+}
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>

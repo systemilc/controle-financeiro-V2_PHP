@@ -40,6 +40,9 @@ class ImportacaoFinanceira {
             // Agrupar dados por fornecedor/compra
             $compras_agrupadas = $this->agruparDadosPorCompra($dados);
             
+            // Verificar produtos existentes e adicionar informações de comparação
+            $compras_agrupadas = $this->verificarProdutosExistentes($compras_agrupadas);
+            
             return [
                 'success' => true,
                 'dados' => $compras_agrupadas,
@@ -48,11 +51,130 @@ class ImportacaoFinanceira {
             ];
             
         } catch (Exception $e) {
+            error_log("ImportacaoFinanceira: Erro no processamento da planilha: " . $e->getMessage());
+            error_log("ImportacaoFinanceira: Stack trace: " . $e->getTraceAsString());
+            
             return [
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'debug_info' => [
+                    'file_path' => $file_path,
+                    'filename' => $filename,
+                    'error_line' => $e->getLine(),
+                    'error_file' => $e->getFile()
+                ]
             ];
         }
+    }
+
+    /**
+     * Verifica produtos existentes e adiciona informações de comparação
+     */
+    private function verificarProdutosExistentes($compras_agrupadas) {
+        foreach ($compras_agrupadas as &$compra) {
+            foreach ($compra['produtos'] as &$produto) {
+                // Buscar produtos similares por nome ou código
+                $produtos_similares = $this->buscarProdutosSimilares($produto['nome'], $produto['codigo']);
+                
+                // Buscar TODOS os produtos existentes para permitir vinculação manual
+                $todos_produtos = $this->buscarTodosProdutos();
+                
+                if (!empty($produtos_similares)) {
+                    $produto['produtos_existentes'] = $produtos_similares;
+                    $produto['tem_similares'] = true;
+                    
+                    // Encontrar o melhor preço histórico
+                    $melhor_preco = $this->encontrarMelhorPrecoHistorico($produtos_similares);
+                    $produto['melhor_preco_historico'] = $melhor_preco;
+                } else {
+                    $produto['produtos_existentes'] = [];
+                    $produto['tem_similares'] = false;
+                    $produto['melhor_preco_historico'] = null;
+                }
+                
+                // Sempre adicionar todos os produtos para vinculação manual
+                $produto['todos_produtos_disponiveis'] = $todos_produtos;
+            }
+        }
+        
+        return $compras_agrupadas;
+    }
+
+    /**
+     * Busca produtos similares por nome ou código
+     */
+    private function buscarProdutosSimilares($nome, $codigo) {
+        $stmt = $this->conn->prepare("
+            SELECT DISTINCT p.id, p.nome, p.codigo,
+                   MIN(ic.preco_unitario) as preco_mais_barato,
+                   MAX(ic.preco_unitario) as preco_mais_caro,
+                   AVG(ic.preco_unitario) as preco_medio,
+                   COUNT(DISTINCT ic.compra_id) as total_compras,
+                   COUNT(DISTINCT c.fornecedor_id) as total_fornecedores,
+                   GROUP_CONCAT(DISTINCT f.nome SEPARATOR ', ') as fornecedores
+            FROM produtos p
+            LEFT JOIN itens_compra ic ON p.id = ic.produto_id
+            LEFT JOIN compras c ON ic.compra_id = c.id
+            LEFT JOIN fornecedores f ON c.fornecedor_id = f.id
+            WHERE p.grupo_id = ? 
+            AND (LOWER(p.nome) LIKE LOWER(?) OR LOWER(p.codigo) LIKE LOWER(?))
+            GROUP BY p.id, p.nome, p.codigo
+            ORDER BY p.nome
+        ");
+        
+        $nome_like = '%' . $nome . '%';
+        $codigo_like = '%' . $codigo . '%';
+        
+        $stmt->execute([$this->grupo_id, $nome_like, $codigo_like]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Encontra o melhor preço histórico entre os produtos similares
+     */
+    private function encontrarMelhorPrecoHistorico($produtos_existentes) {
+        $melhor_preco = null;
+        
+        foreach ($produtos_existentes as $produto) {
+            if ($produto['preco_mais_barato'] !== null) {
+                if ($melhor_preco === null || $produto['preco_mais_barato'] < $melhor_preco['preco']) {
+                    $melhor_preco = [
+                        'preco' => $produto['preco_mais_barato'],
+                        'produto_id' => $produto['id'],
+                        'produto_nome' => $produto['nome'],
+                        'total_compras' => $produto['total_compras'],
+                        'total_fornecedores' => $produto['total_fornecedores']
+                    ];
+                }
+            }
+        }
+        
+        return $melhor_preco;
+    }
+
+    /**
+     * Busca todos os produtos existentes para vinculação manual
+     */
+    private function buscarTodosProdutos() {
+        $stmt = $this->conn->prepare("
+            SELECT DISTINCT p.id, p.nome, p.codigo,
+                   MIN(ic.preco_unitario) as preco_mais_barato,
+                   MAX(ic.preco_unitario) as preco_mais_caro,
+                   AVG(ic.preco_unitario) as preco_medio,
+                   COUNT(DISTINCT ic.compra_id) as total_compras,
+                   COUNT(DISTINCT c.fornecedor_id) as total_fornecedores,
+                   GROUP_CONCAT(DISTINCT f.nome SEPARATOR ', ') as fornecedores
+            FROM produtos p
+            LEFT JOIN itens_compra ic ON p.id = ic.produto_id
+            LEFT JOIN compras c ON ic.compra_id = c.id
+            LEFT JOIN fornecedores f ON c.fornecedor_id = f.id
+            WHERE p.grupo_id = ?
+            GROUP BY p.id, p.nome, p.codigo
+            ORDER BY p.nome
+        ");
+        
+        $stmt->execute([$this->grupo_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -98,7 +220,7 @@ class ImportacaoFinanceira {
     /**
      * Importa dados para o sistema financeiro
      */
-    public function importarDados($dados_importacao, $configuracoes) {
+    public function importarDados($dados_importacao, $configuracoes, $vinculacoes_produtos = []) {
         try {
             $this->conn->beginTransaction();
             
@@ -113,6 +235,8 @@ class ImportacaoFinanceira {
             // Log de debug
             error_log("ImportacaoFinanceira: Iniciando importação com " . count($dados_importacao) . " compras");
             error_log("ImportacaoFinanceira: Configurações: " . json_encode($configuracoes));
+            error_log("ImportacaoFinanceira: Vinculações recebidas: " . json_encode($vinculacoes_produtos));
+            error_log("ImportacaoFinanceira: Total de vinculações: " . count($vinculacoes_produtos));
             
             foreach ($dados_importacao as $compra) {
                 try {
@@ -122,16 +246,47 @@ class ImportacaoFinanceira {
                         $resultados['fornecedores_criados']++;
                     }
                     
-                    // 2. Criar produtos
+                    // 2. Criar/vincular produtos e coletar IDs
                     error_log("ImportacaoFinanceira: Processando " . count($compra['produtos']) . " produtos para compra " . $compra['compra']['nota']);
+                    $produtos_com_ids = [];
+                    
                     foreach ($compra['produtos'] as $index => $produto_data) {
                         error_log("ImportacaoFinanceira: Produto $index - Nome: '{$produto_data['nome']}', Código: '{$produto_data['codigo']}', Fornecedor ID: $fornecedor_id");
-                        $produto_id = $this->criarOuObterProduto($produto_data, $fornecedor_id);
-                        if ($produto_id) {
-                            $resultados['produtos_criados']++;
-                            error_log("ImportacaoFinanceira: Produto criado/obtido com ID: $produto_id");
+                        
+                        // Verificar se há vinculação definida para este produto
+                        $chave_produto = $compra['compra']['nota'] . '_' . $index;
+                        $produto_id = null;
+                        
+                        error_log("ImportacaoFinanceira: Verificando vinculação para chave: '$chave_produto'");
+                        error_log("ImportacaoFinanceira: Vinculação existe? " . (isset($vinculacoes_produtos[$chave_produto]) ? 'SIM' : 'NÃO'));
+                        if (isset($vinculacoes_produtos[$chave_produto])) {
+                            error_log("ImportacaoFinanceira: Valor da vinculação: '{$vinculacoes_produtos[$chave_produto]}'");
+                        }
+                        
+                        if (isset($vinculacoes_produtos[$chave_produto]) && $vinculacoes_produtos[$chave_produto] !== 'novo') {
+                            // Usar produto existente vinculado
+                            $produto_id = $vinculacoes_produtos[$chave_produto];
+                            error_log("ImportacaoFinanceira: Usando produto existente vinculado ID: $produto_id");
                         } else {
-                            error_log("ImportacaoFinanceira: ERRO - Falha ao criar/obter produto: '{$produto_data['nome']}'");
+                            // Criar novo produto
+                            error_log("ImportacaoFinanceira: Criando novo produto (sem vinculação ou vinculação = 'novo')");
+                            $produto_id = $this->criarOuObterProduto($produto_data, $fornecedor_id);
+                            if ($produto_id) {
+                                $resultados['produtos_criados']++;
+                                error_log("ImportacaoFinanceira: Produto criado/obtido com ID: $produto_id");
+                            } else {
+                                error_log("ImportacaoFinanceira: ERRO - Falha ao criar/obter produto: '{$produto_data['nome']}'");
+                            }
+                        }
+                        
+                        // Adicionar produto com ID para criação dos itens
+                        if ($produto_id) {
+                            $produtos_com_ids[] = [
+                                'produto_id' => $produto_id,
+                                'quantidade' => $produto_data['quantidade'],
+                                'valor_unitario' => $produto_data['valor_unitario'],
+                                'valor_total' => $produto_data['valor_total']
+                            ];
                         }
                     }
                     
@@ -141,7 +296,7 @@ class ImportacaoFinanceira {
                         error_log("ImportacaoFinanceira: Compra criada com ID: " . $compra_id);
                         
                         // 4. Criar itens de compra
-                        $itens_criados = $this->criarItensCompra($compra_id, $compra['produtos']);
+                        $itens_criados = $this->criarItensCompra($compra_id, $produtos_com_ids);
                         error_log("ImportacaoFinanceira: Itens de compra criados: " . $itens_criados);
                         
                         // 5. Criar transações (principal ou parcelas)
@@ -304,25 +459,12 @@ class ImportacaoFinanceira {
     /**
      * Cria itens de compra
      */
-    private function criarItensCompra($compra_id, $produtos) {
+    private function criarItensCompra($compra_id, $produtos_com_ids) {
         $itens_criados = 0;
         
-        foreach ($produtos as $produto_data) {
+        foreach ($produtos_com_ids as $produto_data) {
             try {
-                // Buscar ID do produto
-                $stmt = $this->conn->prepare("
-                    SELECT id FROM produtos 
-                    WHERE codigo = ? AND grupo_id = ?
-                ");
-                $stmt->execute([$produto_data['codigo'], $this->grupo_id]);
-                $produto = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                if (!$produto) {
-                    error_log("ImportacaoFinanceira: Produto não encontrado: {$produto_data['codigo']}");
-                    continue;
-                }
-                
-                // Criar item de compra
+                // Criar item de compra diretamente com o ID do produto
                 $stmt = $this->conn->prepare("
                     INSERT INTO itens_compra (
                         compra_id, produto_id, quantidade, 
@@ -332,7 +474,7 @@ class ImportacaoFinanceira {
                 
                 $result = $stmt->execute([
                     $compra_id,
-                    $produto['id'],
+                    $produto_data['produto_id'],
                     $produto_data['quantidade'],
                     $produto_data['valor_unitario'],
                     $produto_data['valor_total']
@@ -340,8 +482,9 @@ class ImportacaoFinanceira {
                 
                 if ($result) {
                     $itens_criados++;
+                    error_log("ImportacaoFinanceira: Item de compra criado - Produto ID: {$produto_data['produto_id']}, Quantidade: {$produto_data['quantidade']}, Preço: {$produto_data['valor_unitario']}");
                 } else {
-                    error_log("ImportacaoFinanceira: ERRO - Falha ao criar item de compra para produto: {$produto_data['nome']}");
+                    error_log("ImportacaoFinanceira: ERRO - Falha ao criar item de compra para produto ID: {$produto_data['produto_id']}");
                 }
             } catch (Exception $e) {
                 error_log("ImportacaoFinanceira: Exceção ao criar item de compra: " . $e->getMessage());

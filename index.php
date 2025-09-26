@@ -27,7 +27,7 @@ $categoria->grupo_id = $grupo_id;
 $conta = new Conta($db);
 $conta->grupo_id = $grupo_id;
 
-// Obter filtros de data (mês/ano)
+// Obter filtros de data (mês/ano) - Por padrão mostra mês atual
 $mes_selecionado = isset($_GET['mes']) ? (int)$_GET['mes'] : date('n');
 $ano_selecionado = isset($_GET['ano']) ? (int)$_GET['ano'] : date('Y');
 
@@ -42,6 +42,16 @@ $data_fim = date('Y-m-t', strtotime($data_inicio));
 // Obter resumo do período selecionado
 $resumo = $transacao->getResumo($data_inicio, $data_fim, $grupo_id);
 
+// Obter resumo geral (todas as transações)
+$resumo_geral = $transacao->getResumo(null, null, $grupo_id);
+
+// Obter resumo do mês atual
+$mes_atual = date('n');
+$ano_atual = date('Y');
+$data_inicio_mes_atual = sprintf('%04d-%02d-01', $ano_atual, $mes_atual);
+$data_fim_mes_atual = date('Y-m-t', strtotime($data_inicio_mes_atual));
+$resumo_mes_atual = $transacao->getResumo($data_inicio_mes_atual, $data_fim_mes_atual, $grupo_id);
+
 // Obter transações do período selecionado
 $stmt_transacoes = $transacao->read(null, null, null, null, $grupo_id, $data_inicio, $data_fim);
 $transacoes = $stmt_transacoes->fetchAll(PDO::FETCH_ASSOC);
@@ -51,6 +61,7 @@ $stmt_contas = $conta->read($grupo_id);
 $contas = $stmt_contas->fetchAll(PDO::FETCH_ASSOC);
 
 $saldo = ($resumo['total_receitas'] ?? 0) - ($resumo['total_despesas'] ?? 0);
+$saldo_geral = ($resumo_geral['total_receitas'] ?? 0) - ($resumo_geral['total_despesas'] ?? 0);
 ?>
 
 <!DOCTYPE html>
@@ -170,63 +181,198 @@ $saldo = ($resumo['total_receitas'] ?? 0) - ($resumo['total_despesas'] ?? 0);
                     </div>
 
                     <div class="container-fluid p-4">
-                        <!-- Cards de Resumo -->
+                        <!-- Visão Geral do Financeiro -->
                         <div class="row mb-4">
-                            <div class="col-md-3 mb-3">
-                                <div class="card card-stat">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-chart-line me-2"></i>Visão Geral do Financeiro
+                                        </h5>
+                                    </div>
                                     <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="stat-icon bg-success me-3">
-                                                <i class="fas fa-arrow-up"></i>
+                                        <div class="row">
+                                            <!-- Totais Gerais -->
+                                            <div class="col-md-6 mb-4">
+                                                <h6 class="text-muted mb-3">
+                                                    <i class="fas fa-globe me-1"></i>Totais Gerais (Todas as Transações)
+                                                </h6>
+                                                <div class="row">
+                                                    <div class="col-6 mb-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stat-icon bg-success me-2" style="width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                                <i class="fas fa-arrow-up text-white" style="font-size: 12px;"></i>
+                                                            </div>
+                                                            <div>
+                                                                <small class="text-muted">Receitas</small><br>
+                                                                <strong class="text-success">R$ <?= number_format($resumo_geral['total_receitas'] ?? 0, 2, ',', '.') ?></strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6 mb-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stat-icon bg-danger me-2" style="width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                                <i class="fas fa-arrow-down text-white" style="font-size: 12px;"></i>
+                                                            </div>
+                                                            <div>
+                                                                <small class="text-muted">Despesas</small><br>
+                                                                <strong class="text-danger">R$ <?= number_format($resumo_geral['total_despesas'] ?? 0, 2, ',', '.') ?></strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6 mb-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stat-icon <?= $saldo_geral >= 0 ? 'bg-info' : 'bg-warning' ?> me-2" style="width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                                <i class="fas fa-balance-scale text-white" style="font-size: 12px;"></i>
+                                                            </div>
+                                                            <div>
+                                                                <small class="text-muted">Saldo Geral</small><br>
+                                                                <strong class="<?= $saldo_geral >= 0 ? 'text-info' : 'text-warning' ?>">R$ <?= number_format($saldo_geral, 2, ',', '.') ?></strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6 mb-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stat-icon bg-secondary me-2" style="width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                                <i class="fas fa-list text-white" style="font-size: 12px;"></i>
+                                                            </div>
+                                                            <div>
+                                                                <small class="text-muted">Total Transações</small><br>
+                                                                <strong class="text-secondary"><?= ($resumo_geral['qtd_receitas'] ?? 0) + ($resumo_geral['qtd_despesas'] ?? 0) ?></strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h6 class="text-muted mb-1">Receitas</h6>
-                                                <h4 class="mb-0 text-success">R$ <?= number_format($resumo['total_receitas'] ?? 0, 2, ',', '.') ?></h4>
+                                            
+                                            <!-- Mês Atual -->
+                                            <div class="col-md-6 mb-4">
+                                                <h6 class="text-muted mb-3">
+                                                    <i class="fas fa-calendar-alt me-1"></i>Mês Atual (<?= date('m/Y') ?>)
+                                                </h6>
+                                                <div class="row">
+                                                    <div class="col-6 mb-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stat-icon bg-success me-2" style="width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                                <i class="fas fa-arrow-up text-white" style="font-size: 12px;"></i>
+                                                            </div>
+                                                            <div>
+                                                                <small class="text-muted">Receitas</small><br>
+                                                                <strong class="text-success">R$ <?= number_format($resumo_mes_atual['total_receitas'] ?? 0, 2, ',', '.') ?></strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6 mb-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stat-icon bg-danger me-2" style="width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                                <i class="fas fa-arrow-down text-white" style="font-size: 12px;"></i>
+                                                            </div>
+                                                            <div>
+                                                                <small class="text-muted">Despesas</small><br>
+                                                                <strong class="text-danger">R$ <?= number_format($resumo_mes_atual['total_despesas'] ?? 0, 2, ',', '.') ?></strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6 mb-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stat-icon <?= ($resumo_mes_atual['total_receitas'] ?? 0) - ($resumo_mes_atual['total_despesas'] ?? 0) >= 0 ? 'bg-info' : 'bg-warning' ?> me-2" style="width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                                <i class="fas fa-balance-scale text-white" style="font-size: 12px;"></i>
+                                                            </div>
+                                                            <div>
+                                                                <small class="text-muted">Saldo do Mês</small><br>
+                                                                <strong class="<?= ($resumo_mes_atual['total_receitas'] ?? 0) - ($resumo_mes_atual['total_despesas'] ?? 0) >= 0 ? 'text-info' : 'text-warning' ?>">R$ <?= number_format(($resumo_mes_atual['total_receitas'] ?? 0) - ($resumo_mes_atual['total_despesas'] ?? 0), 2, ',', '.') ?></strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6 mb-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stat-icon bg-secondary me-2" style="width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                                <i class="fas fa-list text-white" style="font-size: 12px;"></i>
+                                                            </div>
+                                                            <div>
+                                                                <small class="text-muted">Transações</small><br>
+                                                                <strong class="text-secondary"><?= ($resumo_mes_atual['qtd_receitas'] ?? 0) + ($resumo_mes_atual['qtd_despesas'] ?? 0) ?></strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="card card-stat">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="stat-icon bg-danger me-3">
-                                                <i class="fas fa-arrow-down"></i>
-                                            </div>
-                                            <div>
-                                                <h6 class="text-muted mb-1">Despesas</h6>
-                                                <h4 class="mb-0 text-danger">R$ <?= number_format($resumo['total_despesas'] ?? 0, 2, ',', '.') ?></h4>
-                                            </div>
-                                        </div>
+                        </div>
+
+                        <!-- Cards do Período Selecionado -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-info text-white">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-filter me-2"></i>Período Selecionado (<?= date('m/Y', strtotime($data_inicio)) ?>)
+                                        </h5>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="card card-stat">
                                     <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="stat-icon <?= $saldo >= 0 ? 'bg-info' : 'bg-warning' ?> me-3">
-                                                <i class="fas fa-balance-scale"></i>
+                                        <div class="row">
+                                            <div class="col-md-3 mb-3">
+                                                <div class="card card-stat">
+                                                    <div class="card-body">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stat-icon bg-success me-3">
+                                                                <i class="fas fa-arrow-up"></i>
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="text-muted mb-1">Receitas</h6>
+                                                                <h4 class="mb-0 text-success">R$ <?= number_format($resumo['total_receitas'] ?? 0, 2, ',', '.') ?></h4>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h6 class="text-muted mb-1">Saldo</h6>
-                                                <h4 class="mb-0 <?= $saldo >= 0 ? 'text-info' : 'text-warning' ?>">R$ <?= number_format($saldo, 2, ',', '.') ?></h4>
+                                            <div class="col-md-3 mb-3">
+                                                <div class="card card-stat">
+                                                    <div class="card-body">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stat-icon bg-danger me-3">
+                                                                <i class="fas fa-arrow-down"></i>
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="text-muted mb-1">Despesas</h6>
+                                                                <h4 class="mb-0 text-danger">R$ <?= number_format($resumo['total_despesas'] ?? 0, 2, ',', '.') ?></h4>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <div class="card card-stat">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center">
-                                            <div class="stat-icon bg-secondary me-3">
-                                                <i class="fas fa-list"></i>
+                                            <div class="col-md-3 mb-3">
+                                                <div class="card card-stat">
+                                                    <div class="card-body">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stat-icon <?= $saldo >= 0 ? 'bg-info' : 'bg-warning' ?> me-3">
+                                                                <i class="fas fa-balance-scale"></i>
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="text-muted mb-1">Saldo</h6>
+                                                                <h4 class="mb-0 <?= $saldo >= 0 ? 'text-info' : 'text-warning' ?>">R$ <?= number_format($saldo, 2, ',', '.') ?></h4>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h6 class="text-muted mb-1">Transações</h6>
-                                                <h4 class="mb-0 text-secondary"><?= ($resumo['qtd_receitas'] ?? 0) + ($resumo['qtd_despesas'] ?? 0) ?></h4>
+                                            <div class="col-md-3 mb-3">
+                                                <div class="card card-stat">
+                                                    <div class="card-body">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stat-icon bg-secondary me-3">
+                                                                <i class="fas fa-list"></i>
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="text-muted mb-1">Transações</h6>
+                                                                <h4 class="mb-0 text-secondary"><?= ($resumo['qtd_receitas'] ?? 0) + ($resumo['qtd_despesas'] ?? 0) ?></h4>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

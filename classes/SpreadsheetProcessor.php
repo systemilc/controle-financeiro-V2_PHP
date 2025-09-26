@@ -69,16 +69,26 @@ class SpreadsheetProcessor {
                 throw new Exception("Arquivo não encontrado: " . $file_path);
             }
             
+            // Log de debug
+            error_log("SpreadsheetProcessor: Processando arquivo: $filename");
+            error_log("SpreadsheetProcessor: Caminho do arquivo: $file_path");
+            error_log("SpreadsheetProcessor: Tamanho do arquivo: " . filesize($file_path) . " bytes");
+            
             // Determinar tipo de arquivo
             $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+            error_log("SpreadsheetProcessor: Extensão detectada: $extension");
             
             if (in_array($extension, ['csv', 'tsv', 'txt'])) {
+                error_log("SpreadsheetProcessor: Processando como CSV/TSV");
                 $data = $this->processCSV($file_path, $extension);
             } elseif (in_array($extension, ['xlsx', 'xls'])) {
+                error_log("SpreadsheetProcessor: Processando como Excel");
                 $data = $this->processExcel($file_path);
             } else {
                 throw new Exception("Formato de arquivo não suportado. Use CSV, TSV, TXT, XLSX ou XLS.");
             }
+            
+            error_log("SpreadsheetProcessor: Dados processados: " . count($data) . " linhas");
                 
             if (empty($data)) {
                 throw new Exception("Nenhum dado válido encontrado na planilha.");
@@ -87,6 +97,7 @@ class SpreadsheetProcessor {
             return $data;
             
         } catch (Exception $e) {
+            error_log("SpreadsheetProcessor: Erro: " . $e->getMessage());
             throw new Exception("Erro ao processar planilha: " . $e->getMessage());
         }
     }
@@ -104,6 +115,7 @@ class SpreadsheetProcessor {
         
         // Determinar delimitador baseado na extensão
         $delimiter = ($extension === 'tsv' || $extension === 'txt') ? "\t" : ",";
+        error_log("SpreadsheetProcessor: Usando delimitador: " . ($delimiter === "\t" ? "TAB" : "VÍRGULA"));
         
         // Ler cabeçalho
         $header = fgetcsv($handle, 1000, $delimiter);
@@ -112,23 +124,43 @@ class SpreadsheetProcessor {
             throw new Exception("Arquivo vazio ou inválido.");
         }
         
+        error_log("SpreadsheetProcessor: Cabeçalho encontrado: " . implode(' | ', $header));
+        
         // Mapear colunas
         $column_map = $this->mapColumns($header);
+        error_log("SpreadsheetProcessor: Mapeamento de colunas: " . json_encode($column_map));
+        
+        // Verificar se mapeamento está correto
+        $required_fields = ['data', 'nota', 'razao_social', 'cnpj', 'codigo_produto', 'produto', 'quantidade', 'valor_unitario', 'valor_total'];
+        $missing_fields = array_diff($required_fields, array_keys($column_map));
+        if (!empty($missing_fields)) {
+            error_log("SpreadsheetProcessor: Campos obrigatórios ausentes: " . implode(', ', $missing_fields));
+        }
         
         // Ler dados
         $row_number = 1;
+        $valid_rows = 0;
+        $invalid_rows = 0;
+        
         while (($row = fgetcsv($handle, 1000, $delimiter)) !== false) {
             $row_number++;
             
             if (count($row) < count($header)) {
+                error_log("SpreadsheetProcessor: Linha $row_number pulada - colunas insuficientes (" . count($row) . " < " . count($header) . ")");
+                $invalid_rows++;
                 continue; // Pular linhas incompletas
             }
             
             $item = $this->parseRow($row, $column_map, $row_number);
             if ($item) {
                 $data[] = $item;
+                $valid_rows++;
+            } else {
+                $invalid_rows++;
             }
         }
+        
+        error_log("SpreadsheetProcessor: Linhas processadas - Válidas: $valid_rows, Inválidas: $invalid_rows");
         
         fclose($handle);
         return $data;

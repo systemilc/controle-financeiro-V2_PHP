@@ -138,6 +138,43 @@ $compras = $historico->fetchAll(PDO::FETCH_ASSOC);
     </div>
 </div>
 
+<!-- Fornecedor Mais Barato -->
+<?php if($stats['fornecedor_mais_barato']): ?>
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-trophy me-2"></i>Melhor Preço Histórico
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Fornecedor:</strong><br>
+                        <span class="text-primary"><?= htmlspecialchars($stats['fornecedor_mais_barato']['fornecedor_nome']) ?></span>
+                        <?php if($stats['fornecedor_mais_barato']['cnpj']): ?>
+                            <br><small class="text-muted">CNPJ: <?= htmlspecialchars($stats['fornecedor_mais_barato']['cnpj']) ?></small>
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Preço:</strong><br>
+                        <span class="text-success fs-5">R$ <?= number_format($stats['fornecedor_mais_barato']['preco_mais_barato'], 2, ',', '.') ?></span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Data da Compra:</strong><br>
+                        <span class="text-muted"><?= date('d/m/Y', strtotime($stats['fornecedor_mais_barato']['data_compra'])) ?></span>
+                        <?php if($stats['fornecedor_mais_barato']['numero_nota']): ?>
+                            <br><small class="text-muted">Nota: <?= htmlspecialchars($stats['fornecedor_mais_barato']['numero_nota']) ?></small>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Histórico de Compras -->
 <div class="row">
     <div class="col-12">

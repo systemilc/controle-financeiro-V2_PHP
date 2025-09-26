@@ -58,17 +58,18 @@ $stats = [
     'media_gasto' => ($stats_itens['total_gasto_itens'] + $stats_transacoes['total_gasto_transacoes']) / max(1, $stats_itens['total_itens'] + $stats_transacoes['total_transacoes'])
 ];
 
-// Produtos mais comprados (baseado em transações de compra)
+// Produtos mais comprados (baseado em itens de compra)
 $stmt = $db->prepare("
     SELECT 
         p.nome,
         p.codigo,
-        COUNT(t.id) as qtd_compras,
-        SUM(t.valor) as valor_total,
-        AVG(t.valor) as valor_medio,
-        MAX(t.data_transacao) as ultima_compra
+        COUNT(ic.id) as qtd_compras,
+        SUM(ic.preco_total) as valor_total,
+        AVG(ic.preco_unitario) as valor_medio,
+        MAX(c.data_compra) as ultima_compra
     FROM produtos p
-    LEFT JOIN transacoes t ON t.descricao LIKE CONCAT('%', p.nome, '%') AND t.tipo = 'despesa'
+    LEFT JOIN itens_compra ic ON ic.produto_id = p.id
+    LEFT JOIN compras c ON ic.compra_id = c.id
     WHERE p.grupo_id = ?
     GROUP BY p.id, p.nome, p.codigo
     HAVING qtd_compras > 0

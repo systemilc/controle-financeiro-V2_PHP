@@ -543,6 +543,64 @@ class Transacao {
         return $result;
     }
 
+    // Obter transações por tipo de pagamento
+    public function getByPaymentType($data_inicio = null, $data_fim = null) {
+        $query = "SELECT 
+                    tp.nome,
+                    tp.icone,
+                    SUM(CASE WHEN t.tipo = 'receita' AND t.is_confirmed = 1 AND (t.is_transfer IS NULL OR t.is_transfer = 0) THEN t.valor ELSE 0 END) as receitas,
+                    SUM(CASE WHEN t.tipo = 'despesa' AND t.is_confirmed = 1 AND (t.is_transfer IS NULL OR t.is_transfer = 0) THEN t.valor ELSE 0 END) as despesas,
+                    COUNT(t.id) as quantidade
+                  FROM " . $this->table_name . " t
+                  LEFT JOIN tipos_pagamento tp ON t.tipo_pagamento_id = tp.id
+                  WHERE t.usuario_id IN (SELECT id FROM usuarios WHERE grupo_id = :grupo_id)";
+
+        $params = [':grupo_id' => $this->grupo_id];
+
+        if($data_inicio) {
+            $query .= " AND t.data_transacao >= :data_inicio";
+            $params[':data_inicio'] = $data_inicio;
+        }
+
+        if($data_fim) {
+            $query .= " AND t.data_transacao <= :data_fim";
+            $params[':data_fim'] = $data_fim;
+        }
+
+        $query .= " GROUP BY tp.id, tp.nome, tp.icone
+                    HAVING SUM(CASE WHEN t.tipo = 'receita' AND t.is_confirmed = 1 AND (t.is_transfer IS NULL OR t.is_transfer = 0) THEN t.valor ELSE 0 END) > 0 
+                    OR SUM(CASE WHEN t.tipo = 'despesa' AND t.is_confirmed = 1 AND (t.is_transfer IS NULL OR t.is_transfer = 0) THEN t.valor ELSE 0 END) > 0
+                    ORDER BY (SUM(CASE WHEN t.tipo = 'receita' AND t.is_confirmed = 1 AND (t.is_transfer IS NULL OR t.is_transfer = 0) THEN t.valor ELSE 0 END) + 
+                             SUM(CASE WHEN t.tipo = 'despesa' AND t.is_confirmed = 1 AND (t.is_transfer IS NULL OR t.is_transfer = 0) THEN t.valor ELSE 0 END)) DESC";
+
+        $stmt = $this->conn->prepare($query);
+
+        foreach($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Calcular percentual e definir cores padrão
+        $total = 0;
+        $cores_padrao = ['#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8', '#6f42c1', '#fd7e14', '#6c757d'];
+        $cor_index = 0;
+        
+        foreach($result as $item) {
+            $total += $item['receitas'] + $item['despesas'];
+        }
+        
+        foreach($result as &$item) {
+            $item['total'] = $item['receitas'] + $item['despesas'];
+            $item['percentual'] = $total > 0 ? ($item['total'] / $total) * 100 : 0;
+            $item['cor'] = $cores_padrao[$cor_index % count($cores_padrao)];
+            $cor_index++;
+        }
+
+        return $result;
+    }
+
     // Obter evolução mensal
     public function getMonthlyEvolution($data_inicio = null, $data_fim = null) {
         $query = "SELECT 
