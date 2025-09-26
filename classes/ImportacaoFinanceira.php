@@ -135,25 +135,37 @@ class ImportacaoFinanceira {
                         }
                     }
                     
-                    // 3. Criar transações (principal ou parcelas)
-                    error_log("ImportacaoFinanceira: Verificando parcelamento - Ativo: " . ($configuracoes['parcelamento']['ativo'] ? 'SIM' : 'NÃO') . ", Quantidade: " . $configuracoes['parcelamento']['quantidade']);
-                    
-                    if ($configuracoes['parcelamento']['ativo'] && $configuracoes['parcelamento']['quantidade'] > 1) {
-                        // Criar apenas parcelas (sem transação principal)
-                        error_log("ImportacaoFinanceira: Criando parcelas - Quantidade: {$configuracoes['parcelamento']['quantidade']}, Tipo: {$configuracoes['parcelamento']['tipo']}");
-                        $parcelas_criadas = $this->criarParcelasDiretamente($compra, $configuracoes);
-                        error_log("ImportacaoFinanceira: Parcelas criadas: $parcelas_criadas");
-                        $resultados['transacoes_criadas'] += $parcelas_criadas;
-                    } else {
-                        // Criar transação principal (sem parcelamento)
-                        error_log("ImportacaoFinanceira: Criando transação para compra " . $compra['compra']['nota']);
-                        $transacao_id = $this->criarTransacaoPrincipal($compra, $configuracoes);
-                        if ($transacao_id) {
-                            $resultados['transacoes_criadas']++;
-                            error_log("ImportacaoFinanceira: Transação criada com ID: " . $transacao_id);
+                    // 3. Criar registro na tabela compras
+                    $compra_id = $this->criarRegistroCompra($compra, $fornecedor_id, $configuracoes);
+                    if ($compra_id) {
+                        error_log("ImportacaoFinanceira: Compra criada com ID: " . $compra_id);
+                        
+                        // 4. Criar itens de compra
+                        $itens_criados = $this->criarItensCompra($compra_id, $compra['produtos']);
+                        error_log("ImportacaoFinanceira: Itens de compra criados: " . $itens_criados);
+                        
+                        // 5. Criar transações (principal ou parcelas)
+                        error_log("ImportacaoFinanceira: Verificando parcelamento - Ativo: " . ($configuracoes['parcelamento']['ativo'] ? 'SIM' : 'NÃO') . ", Quantidade: " . $configuracoes['parcelamento']['quantidade']);
+                        
+                        if ($configuracoes['parcelamento']['ativo'] && $configuracoes['parcelamento']['quantidade'] > 1) {
+                            // Criar apenas parcelas (sem transação principal)
+                            error_log("ImportacaoFinanceira: Criando parcelas - Quantidade: {$configuracoes['parcelamento']['quantidade']}, Tipo: {$configuracoes['parcelamento']['tipo']}");
+                            $parcelas_criadas = $this->criarParcelasDiretamente($compra, $configuracoes);
+                            error_log("ImportacaoFinanceira: Parcelas criadas: $parcelas_criadas");
+                            $resultados['transacoes_criadas'] += $parcelas_criadas;
                         } else {
-                            error_log("ImportacaoFinanceira: ERRO - Falha ao criar transação para compra " . $compra['compra']['nota']);
+                            // Criar transação principal (sem parcelamento)
+                            error_log("ImportacaoFinanceira: Criando transação para compra " . $compra['compra']['nota']);
+                            $transacao_id = $this->criarTransacaoPrincipal($compra, $configuracoes);
+                            if ($transacao_id) {
+                                $resultados['transacoes_criadas']++;
+                                error_log("ImportacaoFinanceira: Transação criada com ID: " . $transacao_id);
+                            } else {
+                                error_log("ImportacaoFinanceira: ERRO - Falha ao criar transação para compra " . $compra['compra']['nota']);
+                            }
                         }
+                    } else {
+                        error_log("ImportacaoFinanceira: ERRO - Falha ao criar registro de compra " . $compra['compra']['nota']);
                     }
                     
                 } catch (Exception $e) {
@@ -252,6 +264,91 @@ class ImportacaoFinanceira {
             error_log("ImportacaoFinanceira: Exceção ao criar produto: " . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Cria registro na tabela compras
+     */
+    private function criarRegistroCompra($compra, $fornecedor_id, $configuracoes) {
+        try {
+            $stmt = $this->conn->prepare("
+                INSERT INTO compras (
+                    grupo_id, fornecedor_id, numero_nota, valor_total, 
+                    data_compra, conta_id, tipo_pagamento_id, categoria_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $result = $stmt->execute([
+                $this->grupo_id,
+                $fornecedor_id,
+                $compra['compra']['nota'],
+                $compra['compra']['valor_total'],
+                $compra['compra']['data'],
+                $configuracoes['conta_id'],
+                $configuracoes['tipo_pagamento_id'],
+                $configuracoes['categoria_id']
+            ]);
+            
+            if ($result) {
+                return $this->conn->lastInsertId();
+            } else {
+                error_log("ImportacaoFinanceira: ERRO - Falha ao criar registro de compra");
+                return false;
+            }
+        } catch (Exception $e) {
+            error_log("ImportacaoFinanceira: Exceção ao criar compra: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Cria itens de compra
+     */
+    private function criarItensCompra($compra_id, $produtos) {
+        $itens_criados = 0;
+        
+        foreach ($produtos as $produto_data) {
+            try {
+                // Buscar ID do produto
+                $stmt = $this->conn->prepare("
+                    SELECT id FROM produtos 
+                    WHERE codigo = ? AND grupo_id = ?
+                ");
+                $stmt->execute([$produto_data['codigo'], $this->grupo_id]);
+                $produto = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if (!$produto) {
+                    error_log("ImportacaoFinanceira: Produto não encontrado: {$produto_data['codigo']}");
+                    continue;
+                }
+                
+                // Criar item de compra
+                $stmt = $this->conn->prepare("
+                    INSERT INTO itens_compra (
+                        compra_id, produto_id, quantidade, 
+                        preco_unitario, preco_total
+                    ) VALUES (?, ?, ?, ?, ?)
+                ");
+                
+                $result = $stmt->execute([
+                    $compra_id,
+                    $produto['id'],
+                    $produto_data['quantidade'],
+                    $produto_data['valor_unitario'],
+                    $produto_data['valor_total']
+                ]);
+                
+                if ($result) {
+                    $itens_criados++;
+                } else {
+                    error_log("ImportacaoFinanceira: ERRO - Falha ao criar item de compra para produto: {$produto_data['nome']}");
+                }
+            } catch (Exception $e) {
+                error_log("ImportacaoFinanceira: Exceção ao criar item de compra: " . $e->getMessage());
+            }
+        }
+        
+        return $itens_criados;
     }
 
     /**

@@ -140,15 +140,16 @@ class Produto {
 
     // Obter estatísticas do produto
     public function getStats() {
+        // Estatísticas baseadas apenas em itens de compra (fonte principal)
         $query = "SELECT 
                     COUNT(ic.id) as total_compras,
-                    SUM(ic.quantidade) as quantidade_total_comprada,
-                    SUM(ic.preco_total) as valor_total_gasto,
-                    AVG(ic.preco_unitario) as preco_medio_historico,
+                    COALESCE(SUM(ic.quantidade), 0) as quantidade_total_comprada,
+                    COALESCE(SUM(ic.preco_total), 0) as valor_total_gasto,
+                    COALESCE(AVG(ic.preco_unitario), 0) as preco_medio_historico,
                     MIN(c.data_compra) as primeira_compra,
                     MAX(c.data_compra) as ultima_compra,
-                    MIN(ic.preco_unitario) as preco_mais_barato,
-                    MAX(ic.preco_unitario) as preco_mais_caro
+                    COALESCE(MIN(ic.preco_unitario), 0) as preco_mais_barato,
+                    COALESCE(MAX(ic.preco_unitario), 0) as preco_mais_caro
                   FROM " . $this->table_name . " p
                   LEFT JOIN itens_compra ic ON p.id = ic.produto_id
                   LEFT JOIN compras c ON ic.compra_id = c.id
@@ -157,13 +158,69 @@ class Produto {
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(1, $this->id);
         $stmt->execute();
+        $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Se não há dados de itens de compra, buscar em transações de importação
+        if (($stats['total_compras'] ?? 0) == 0) {
+            // Buscar nome do produto para usar na busca
+            $query_nome = "SELECT nome FROM " . $this->table_name . " WHERE id = ?";
+            $stmt_nome = $this->conn->prepare($query_nome);
+            $stmt_nome->bindParam(1, $this->id);
+            $stmt_nome->execute();
+            $produto_nome = $stmt_nome->fetch(PDO::FETCH_ASSOC);
+            
+            if ($produto_nome) {
+                $query_transacoes = "SELECT 
+                            COUNT(t.id) as total_compras,
+                            COUNT(t.id) as quantidade_total_comprada,
+                            COALESCE(SUM(t.valor), 0) as valor_total_gasto,
+                            COALESCE(AVG(t.valor), 0) as preco_medio_historico,
+                            MIN(t.data_transacao) as primeira_compra,
+                            MAX(t.data_transacao) as ultima_compra,
+                            COALESCE(MIN(t.valor), 0) as preco_mais_barato,
+                            COALESCE(MAX(t.valor), 0) as preco_mais_caro
+                          FROM transacoes t
+                          WHERE t.tipo = 'despesa' 
+                          AND t.descricao LIKE ?
+                          AND t.usuario_id IN (SELECT id FROM usuarios WHERE grupo_id = (SELECT grupo_id FROM produtos WHERE id = ?))";
+
+                $stmt = $this->conn->prepare($query_transacoes);
+                $nome_like = '%' . $produto_nome['nome'] . '%';
+                $stmt->bindParam(1, $nome_like);
+                $stmt->bindParam(2, $this->id);
+                $stmt->execute();
+                $stats_transacoes = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($stats_transacoes && ($stats_transacoes['total_compras'] ?? 0) > 0) {
+                    $stats = $stats_transacoes;
+                }
+            }
+        }
         
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        // Garantir que todos os valores sejam numéricos válidos
+        return [
+            'total_compras' => (int)($stats['total_compras'] ?? 0),
+            'quantidade_total_comprada' => (float)($stats['quantidade_total_comprada'] ?? 0),
+            'valor_total_gasto' => (float)($stats['valor_total_gasto'] ?? 0),
+            'preco_medio_historico' => (float)($stats['preco_medio_historico'] ?? 0),
+            'primeira_compra' => $stats['primeira_compra'] ?? null,
+            'ultima_compra' => $stats['ultima_compra'] ?? null,
+            'preco_mais_barato' => (float)($stats['preco_mais_barato'] ?? 0),
+            'preco_mais_caro' => (float)($stats['preco_mais_caro'] ?? 0)
+        ];
     }
 
     // Obter histórico de compras
     public function getHistoricoCompras($limit = 10) {
-        $query = "SELECT ic.*, c.data_compra, c.numero_nota, f.nome as fornecedor_nome
+        // Histórico baseado apenas em itens de compra (fonte principal)
+        $query = "SELECT 
+                    ic.quantidade,
+                    ic.preco_unitario,
+                    ic.preco_total,
+                    c.data_compra,
+                    c.numero_nota,
+                    f.nome as fornecedor_nome,
+                    'item_compra' as tipo_origem
                   FROM itens_compra ic
                   LEFT JOIN compras c ON ic.compra_id = c.id
                   LEFT JOIN fornecedores f ON c.fornecedor_id = f.id
