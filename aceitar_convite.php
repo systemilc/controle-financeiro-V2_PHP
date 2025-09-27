@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $convite_data) {
             $usuario->role = 'collaborator';
             $usuario->is_approved = 1; // Aprovado automaticamente
             $usuario->is_active = 1;
-            $usuario->email = $convite_data['email_convidado'];
+            $usuario->email = $convite_data['email'];
             $usuario->consent_lgpd = 1; // Consentimento automático
             
             if ($usuario->create()) {
@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $convite_data) {
                             <h6><i class="fas fa-info-circle me-2"></i>Convite de:</h6>
                             <p class="mb-1"><strong>Grupo:</strong> <?= htmlspecialchars($convite_data['grupo_nome']) ?></p>
                             <p class="mb-1"><strong>Convidado por:</strong> <?= htmlspecialchars($convite_data['convidado_por_nome']) ?></p>
-                            <p class="mb-0"><strong>Email:</strong> <?= htmlspecialchars($convite_data['email_convidado']) ?></p>
+                            <p class="mb-0"><strong>Email:</strong> <?= htmlspecialchars($convite_data['email']) ?></p>
                         </div>
                         
                         <form method="POST">

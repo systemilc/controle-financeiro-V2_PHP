@@ -200,7 +200,7 @@ $usuario_data = $usuario->readById();
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label">Função</label>
-                                            <input type="text" class="form-control" value="<?= ucfirst($usuario_data['funcao']) ?>" readonly>
+                                            <input type="text" class="form-control" value="<?= ucfirst($usuario_data['role']) ?>" readonly>
                                         </div>
                                     </div>
                                     <div class="col-md-6">

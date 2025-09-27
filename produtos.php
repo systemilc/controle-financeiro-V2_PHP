@@ -119,13 +119,14 @@ $produtos = $stmt_produtos->fetchAll(PDO::FETCH_ASSOC);
             background: white;
             border-radius: 15px;
             padding: 20px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             border-left: 5px solid #17a2b8;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .product-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
         .stats-badge {
             background: linear-gradient(135deg, #17a2b8, #20c997);
@@ -147,6 +148,70 @@ $produtos = $stmt_produtos->fetchAll(PDO::FETCH_ASSOC);
         .price-up { color: #dc3545; }
         .price-down { color: #28a745; }
         .price-stable { color: #6c757d; }
+        
+        /* Melhorias adicionais */
+        .product-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .product-code {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .price-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        
+        .price-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+        
+        .last-purchase {
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+        
+        .dropdown-toggle::after {
+            display: none;
+        }
+        
+        .btn-outline-secondary {
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: #f8f9fa;
+            border-color: #adb5bd;
+        }
+        
+        /* Responsividade melhorada */
+        @media (max-width: 768px) {
+            .product-card {
+                margin-bottom: 15px;
+            }
+            
+            .price-info .row > div {
+                margin-bottom: 10px;
+            }
+        }
+        
+        /* Animações suaves */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -252,14 +317,17 @@ $produtos = $stmt_produtos->fetchAll(PDO::FETCH_ASSOC);
                                     </div>
                                 </div>
                             <?php else: ?>
-                                <?php foreach($produtos as $produto_item): ?>
-                                    <div class="col-md-6 col-lg-4 mb-3">
+                                <?php foreach($produtos as $index => $produto_item): ?>
+                                    <div class="col-md-6 col-lg-4 mb-3 fade-in" style="animation-delay: <?= $index * 0.1 ?>s">
                                         <div class="product-card">
                                             <div class="d-flex justify-content-between align-items-start mb-3">
-                                                <div>
-                                                    <h5 class="card-title mb-1"><?= htmlspecialchars($produto_item['nome']) ?></h5>
+                                                <div class="flex-grow-1">
+                                                    <h5 class="product-title"><?= htmlspecialchars($produto_item['nome']) ?></h5>
                                                     <?php if($produto_item['codigo']): ?>
-                                                        <small class="text-muted">Código: <?= htmlspecialchars($produto_item['codigo']) ?></small>
+                                                        <div class="product-code">
+                                                            <i class="fas fa-barcode me-1"></i>
+                                                            Código: <?= htmlspecialchars($produto_item['codigo']) ?>
+                                                        </div>
                                                     <?php endif; ?>
                                                 </div>
                                                 <div class="dropdown">
@@ -277,6 +345,11 @@ $produtos = $stmt_produtos->fetchAll(PDO::FETCH_ASSOC);
                                                                 <i class="fas fa-history me-2"></i>Ver Histórico
                                                             </button>
                                                         </li>
+                                                        <li>
+                                                            <button class="dropdown-item text-warning" onclick="marcarProdutoAcabado(<?= $produto_item['id'] ?>)">
+                                                                <i class="fas fa-exclamation-triangle me-2"></i>Produto Acabou
+                                                            </button>
+                                                        </li>
                                                         <li><hr class="dropdown-divider"></li>
                                                         <li>
                                                             <a class="dropdown-item text-danger" href="produtos.php?action=delete&id=<?= $produto_item['id'] ?>" 
@@ -292,31 +365,29 @@ $produtos = $stmt_produtos->fetchAll(PDO::FETCH_ASSOC);
                                                 <div class="price-info">
                                                     <div class="row text-center">
                                                         <div class="col-4">
-                                                            <div class="fw-bold"><?= number_format($produto_item['quantidade'], 0, ',', '.') ?></div>
-                                                            <small class="text-muted">Qtd Total</small>
+                                                            <div class="price-value text-primary"><?= number_format($produto_item['quantidade'], 0, ',', '.') ?></div>
+                                                            <div class="price-label">Qtd Total</div>
                                                         </div>
                                                         <div class="col-4">
-                                                            <div class="fw-bold text-success">R$ <?= number_format($produto_item['valor_total'], 2, ',', '.') ?></div>
-                                                            <small class="text-muted">Valor Total</small>
+                                                            <div class="price-value text-success">R$ <?= number_format($produto_item['valor_total'], 2, ',', '.') ?></div>
+                                                            <div class="price-label">Valor Total</div>
                                                         </div>
                                                         <div class="col-4">
-                                                            <div class="fw-bold text-info">R$ <?= number_format($produto_item['preco_medio'], 2, ',', '.') ?></div>
-                                                            <small class="text-muted">Preço Médio</small>
+                                                            <div class="price-value text-info">R$ <?= number_format($produto_item['preco_medio'], 2, ',', '.') ?></div>
+                                                            <div class="price-label">Preço Médio</div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             <?php endif; ?>
                                             
                                             <div class="d-flex justify-content-between align-items-center mt-3">
-                                                <div>
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-calendar me-1"></i>
-                                                        <?php if($produto_item['data_ultima_compra']): ?>
-                                                            Última compra: <?= date('d/m/Y', strtotime($produto_item['data_ultima_compra'])) ?>
-                                                        <?php else: ?>
-                                                            Nunca comprado
-                                                        <?php endif; ?>
-                                                    </small>
+                                                <div class="last-purchase">
+                                                    <i class="fas fa-calendar me-1"></i>
+                                                    <?php if($produto_item['data_ultima_compra']): ?>
+                                                        Última compra: <?= date('d/m/Y', strtotime($produto_item['data_ultima_compra'])) ?>
+                                                    <?php else: ?>
+                                                        Nunca comprado
+                                                    <?php endif; ?>
                                                 </div>
                                                 <div>
                                                     <span class="stats-badge">
@@ -422,6 +493,91 @@ $produtos = $stmt_produtos->fetchAll(PDO::FETCH_ASSOC);
                     document.getElementById('historicoContent').innerHTML = 
                         '<div class="alert alert-danger">Erro ao carregar histórico</div>';
                 });
+        }
+
+        function marcarProdutoAcabado(produtoId) {
+            if (confirm('Deseja marcar este produto como acabado? Isso gerará uma sugestão de compra baseada no consumo histórico.')) {
+                // Mostrar loading
+                const loadingToast = document.createElement('div');
+                loadingToast.className = 'toast position-fixed top-0 end-0 m-3';
+                loadingToast.innerHTML = `
+                    <div class="toast-body">
+                        <div class="spinner-border spinner-border-sm me-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        Gerando sugestão de compra...
+                    </div>
+                `;
+                document.body.appendChild(loadingToast);
+                const toast = new bootstrap.Toast(loadingToast);
+                toast.show();
+
+                // Fazer requisição AJAX
+                fetch('ajax_sugestoes.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `action=marcar_produto_acabado&produto_id=${produtoId}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Remover loading
+                    toast.hide();
+                    loadingToast.remove();
+
+                    if (data.success) {
+                        // Mostrar sucesso
+                        const successToast = document.createElement('div');
+                        successToast.className = 'toast position-fixed top-0 end-0 m-3';
+                        successToast.innerHTML = `
+                            <div class="toast-body bg-success text-white">
+                                <i class="fas fa-check-circle me-2"></i>
+                                ${data.message}
+                            </div>
+                        `;
+                        document.body.appendChild(successToast);
+                        const successToastInstance = new bootstrap.Toast(successToast);
+                        successToastInstance.show();
+
+                        // Redirecionar para sugestões após 2 segundos
+                        setTimeout(() => {
+                            window.location.href = 'sugestoes_compra.php';
+                        }, 2000);
+                    } else {
+                        // Mostrar erro
+                        const errorToast = document.createElement('div');
+                        errorToast.className = 'toast position-fixed top-0 end-0 m-3';
+                        errorToast.innerHTML = `
+                            <div class="toast-body bg-danger text-white">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                ${data.message}
+                            </div>
+                        `;
+                        document.body.appendChild(errorToast);
+                        const errorToastInstance = new bootstrap.Toast(errorToast);
+                        errorToastInstance.show();
+                    }
+                })
+                .catch(error => {
+                    // Remover loading
+                    toast.hide();
+                    loadingToast.remove();
+
+                    // Mostrar erro
+                    const errorToast = document.createElement('div');
+                    errorToast.className = 'toast position-fixed top-0 end-0 m-3';
+                    errorToast.innerHTML = `
+                        <div class="toast-body bg-danger text-white">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Erro ao processar solicitação
+                        </div>
+                    `;
+                    document.body.appendChild(errorToast);
+                    const errorToastInstance = new bootstrap.Toast(errorToast);
+                    errorToastInstance.show();
+                });
+            }
         }
 
         // Limpar formulário quando modal é fechado

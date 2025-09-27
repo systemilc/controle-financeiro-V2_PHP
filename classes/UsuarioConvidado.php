@@ -47,7 +47,7 @@ class UsuarioConvidado {
     // Obter usuários convidados do grupo
     public function getByGrupo($grupo_id) {
         $query = "SELECT uc.*, u.username, u.email, u.created_at as usuario_criado_em,
-                         c.email_convidado, c.data_envio as convite_enviado_em
+                         c.email as email_convidado, c.data_envio as convite_enviado_em
                   FROM " . $this->table_name . " uc
                   LEFT JOIN usuarios u ON uc.usuario_id = u.id
                   LEFT JOIN convites c ON uc.convite_id = c.id

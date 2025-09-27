@@ -714,7 +714,7 @@ class Transacao {
                 'conta' => $transacao['conta_nome']
             ];
             
-            $notificacao->create('pagamento_confirmado', $titulo, $mensagem, null, 'media', $dados_extras);
+            $notificacao->create('pagamento_confirmado', $titulo, $mensagem, $transacao['usuario_id'], 'media', $dados_extras);
         }
     }
 

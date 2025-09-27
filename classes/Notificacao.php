@@ -18,6 +18,16 @@ class Notificacao {
 
     // Criar notificação
     public function create($tipo, $titulo, $mensagem, $usuario_id = null, $prioridade = 'media', $dados_extras = null) {
+        // Se usuario_id for null, buscar o primeiro usuário admin do grupo
+        if ($usuario_id === null) {
+            $query_admin = "SELECT id FROM usuarios WHERE grupo_id = :grupo_id AND role = 'admin' LIMIT 1";
+            $stmt_admin = $this->conn->prepare($query_admin);
+            $stmt_admin->bindParam(":grupo_id", $this->grupo_id);
+            $stmt_admin->execute();
+            $admin = $stmt_admin->fetch(PDO::FETCH_ASSOC);
+            $usuario_id = $admin ? $admin['id'] : 1; // Fallback para usuário 1
+        }
+
         $query = "INSERT INTO " . $this->table_name . " 
                   SET grupo_id=:grupo_id, usuario_id=:usuario_id, tipo=:tipo, 
                       titulo=:titulo, mensagem=:mensagem, prioridade=:prioridade, 

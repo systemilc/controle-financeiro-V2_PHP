@@ -59,6 +59,9 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <a class="nav-link <?= $currentPage === 'produtos.php' ? 'active' : '' ?>" href="produtos.php">
                 <i class="fas fa-box"></i>Produtos
             </a>
+            <a class="nav-link <?= $currentPage === 'sugestoes_compra.php' ? 'active' : '' ?>" href="sugestoes_compra.php">
+                <i class="fas fa-shopping-cart"></i>Sugestões de Compra
+            </a>
             <a class="nav-link <?= $currentPage === 'compras.php' ? 'active' : '' ?>" href="compras.php">
                 <i class="fas fa-shopping-cart"></i>Compras
             </a>
@@ -161,6 +164,9 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             </a>
             <a class="nav-link <?= $currentPage === 'produtos.php' ? 'active' : '' ?>" href="produtos.php" >
                 <i class="fas fa-box"></i>Produtos
+            </a>
+            <a class="nav-link <?= $currentPage === 'sugestoes_compra.php' ? 'active' : '' ?>" href="sugestoes_compra.php" >
+                <i class="fas fa-shopping-cart"></i>Sugestões de Compra
             </a>
             <a class="nav-link <?= $currentPage === 'compras.php' ? 'active' : '' ?>" href="compras.php" >
                 <i class="fas fa-shopping-cart"></i>Compras

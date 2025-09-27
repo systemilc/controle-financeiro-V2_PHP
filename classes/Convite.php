@@ -40,7 +40,7 @@ class Convite {
 
         $query = "INSERT INTO " . $this->table_name . " 
                   SET grupo_id=:grupo_id, convidado_por=:convidado_por, 
-                      email_convidado=:email_convidado, token=:token, 
+                      email=:email_convidado, token=:token, 
                       data_expiracao=:data_expiracao, observacoes=:observacoes";
 
         $stmt = $this->conn->prepare($query);
@@ -71,7 +71,7 @@ class Convite {
     // Verificar se já existe convite pendente
     private function conviteExistente() {
         $query = "SELECT id FROM " . $this->table_name . " 
-                  WHERE grupo_id = :grupo_id AND email_convidado = :email_convidado 
+                  WHERE grupo_id = :grupo_id AND email = :email_convidado 
                   AND status = 'pendente' AND data_expiracao > NOW()";
 
         $stmt = $this->conn->prepare($query);

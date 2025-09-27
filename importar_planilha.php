@@ -126,10 +126,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $result = $importacao->importarDados($dados_importacao, $configuracoes, $vinculacoes_produtos);
             
             if ($result['success']) {
+                // Remover sugestões de compra para produtos que foram comprados
+                require_once 'classes/SugestaoCompra.php';
+                $sugestao = new SugestaoCompra($db);
+                
+                $sugestoes_removidas = 0;
+                
+                // Método 1: Remover por vinculações (produtos existentes)
+                $produtos_comprados = [];
+                foreach ($dados_importacao as $compra) {
+                    foreach ($compra['produtos'] as $produto) {
+                        if (isset($vinculacoes_produtos) && !empty($vinculacoes_produtos)) {
+                            $chave_produto = $compra['compra']['nota'] . '_' . array_search($produto, $compra['produtos']);
+                            if (isset($vinculacoes_produtos[$chave_produto]) && $vinculacoes_produtos[$chave_produto] !== 'novo') {
+                                $produtos_comprados[] = $vinculacoes_produtos[$chave_produto];
+                            }
+                        }
+                    }
+                }
+                
+                // Remover sugestões para produtos vinculados
+                if (!empty($produtos_comprados)) {
+                    $sugestao->removerSugestoesCompradas($produtos_comprados, $grupo_id);
+                    $sugestoes_removidas += count($produtos_comprados);
+                }
+                
+                // Método 2: Remover por nome e código (produtos novos ou não vinculados)
+                foreach ($dados_importacao as $compra) {
+                    foreach ($compra['produtos'] as $produto) {
+                        // Tentar remover por nome do produto
+                        if ($sugestao->removerSugestaoPorProduto($produto['nome'], $produto['codigo'], $grupo_id)) {
+                            $sugestoes_removidas++;
+                        }
+                    }
+                }
+                
                 $message = 'Importação realizada com sucesso! ' . 
                           $result['resultados']['transacoes_criadas'] . ' transações criadas, ' .
                           $result['resultados']['fornecedores_criados'] . ' fornecedores criados, ' .
                           $result['resultados']['produtos_criados'] . ' produtos criados.';
+                
+                if ($sugestoes_removidas > 0) {
+                    $message .= ' ' . $sugestoes_removidas . ' sugestões de compra removidas automaticamente.';
+                }
+                
                 $message_type = 'success';
                 $preview_data = null; // Limpar preview
             } else {
